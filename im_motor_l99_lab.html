@@ -1,0 +1,2511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4-Pole Induction Motor — Comprehensive Engineering Lab (Power Flow / Dynamics / Faults / Control)</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap');
+
+:root{
+  --bg:#06090f;
+  --bg2:#0c1220;
+  --card:#121a2c;
+  --card-h:#172238;
+  --border:#243352;
+  --acc:#00e5ff;
+  --acc2:#7c5cff;
+  --acc3:#ffb020;
+  --acc4:#10d18d;
+  --acc5:#ff5577;
+  --txt:#e2e8f0;
+  --dim:#94a3b8;
+  --bright:#ffffff;
+  --good:#10d18d;
+  --warn:#ffb020;
+  --bad:#ff5577;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{
+  width:100%;height:100%;
+  font-family:'Rajdhani',sans-serif;
+  background:var(--bg);color:var(--txt);
+  overflow:hidden;
+}
+.app{display:flex;flex-direction:column;width:100%;height:100vh;}
+
+/* Header */
+.hdr{
+  background:linear-gradient(135deg,#0a1226 0%,#1a0f3d 100%);
+  border-bottom:1px solid var(--border);
+  padding:8px 18px;display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+.hdr h1{
+  font-family:'JetBrains Mono',monospace;
+  font-size:14px;font-weight:700;letter-spacing:1px;
+  background:linear-gradient(90deg,var(--acc),var(--acc2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.hdr .specs{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--dim);}
+.hdr .specs span{color:var(--acc);}
+
+/* Tabs */
+.tabnav{
+  display:flex;flex-wrap:wrap;
+  background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;overflow-x:auto;
+}
+.tabbtn{
+  padding:8px 12px;background:none;border:none;
+  color:var(--dim);
+  font-family:'JetBrains Mono',monospace;
+  font-size:10.5px;font-weight:500;letter-spacing:0.4px;
+  cursor:pointer;border-bottom:2px solid transparent;
+  white-space:nowrap;transition:all .2s;
+}
+.tabbtn:hover{color:var(--txt);background:rgba(255,255,255,.03);}
+.tabbtn.active{
+  color:var(--acc);border-bottom-color:var(--acc);
+  background:rgba(0,229,255,.06);
+}
+
+/* Content */
+.main{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px;}
+.panel{display:none;}
+.panel.active{display:block;}
+
+/* Card */
+.card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:14px;margin-bottom:12px;
+  transition:background .2s;
+}
+.card:hover{background:var(--card-h);}
+.card h3{
+  color:var(--acc);font-family:'JetBrains Mono',monospace;
+  font-size:12px;font-weight:600;letter-spacing:.6px;
+  margin-bottom:10px;padding-bottom:6px;
+  border-bottom:1px solid var(--border);
+  text-transform:uppercase;
+}
+.card h4{
+  color:var(--acc3);font-family:'JetBrains Mono',monospace;
+  font-size:11px;font-weight:600;letter-spacing:.5px;
+  margin:8px 0 6px 0;
+}
+
+/* Grid */
+.grid{display:grid;gap:12px;}
+.grid-2{grid-template-columns:repeat(2,1fr);}
+.grid-3{grid-template-columns:repeat(3,1fr);}
+.grid-4{grid-template-columns:repeat(4,1fr);}
+.grid-5{grid-template-columns:repeat(5,1fr);}
+@media(max-width:1100px){.grid-3,.grid-4,.grid-5{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:700px){.grid-2,.grid-3,.grid-4,.grid-5{grid-template-columns:1fr;}}
+
+/* Slider */
+.slider-row{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 0;border-bottom:1px dashed rgba(255,255,255,.04);
+}
+.slider-row:last-child{border-bottom:none;}
+.slider-row label{
+  flex:0 0 130px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:10.5px;color:var(--dim);
+}
+.slider-row input[type=range]{
+  flex:1;height:4px;
+  -webkit-appearance:none;appearance:none;
+  background:linear-gradient(90deg,var(--acc) 0%,var(--acc2) 100%);
+  border-radius:2px;cursor:pointer;outline:none;
+}
+.slider-row input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:14px;height:14px;border-radius:50%;
+  background:var(--acc);border:2px solid var(--bg);
+  cursor:pointer;box-shadow:0 0 8px var(--acc);
+}
+.slider-row input[type=range]::-moz-range-thumb{
+  width:14px;height:14px;border-radius:50%;
+  background:var(--acc);border:2px solid var(--bg);
+  cursor:pointer;box-shadow:0 0 8px var(--acc);
+}
+.slider-row .val{
+  flex:0 0 80px;text-align:right;
+  font-family:'Share Tech Mono',monospace;
+  font-size:11px;color:var(--acc);font-weight:600;
+}
+
+/* Buttons */
+.btn{
+  padding:6px 14px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;font-weight:600;letter-spacing:.6px;
+  border:1px solid var(--border);
+  background:var(--card);color:var(--txt);
+  border-radius:5px;cursor:pointer;
+  transition:all .2s;
+  text-transform:uppercase;
+}
+.btn:hover{background:var(--card-h);transform:translateY(-1px);}
+.btn-primary{background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;border:none;}
+.btn-success{background:linear-gradient(135deg,var(--good),#0aa86f);color:#fff;border:none;}
+.btn-danger{background:linear-gradient(135deg,var(--bad),#c73a5b);color:#fff;border:none;}
+.btn-warning{background:linear-gradient(135deg,var(--warn),#cc8c19);color:#000;border:none;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;}
+
+/* KPI */
+.kpi{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:6px;padding:10px;text-align:center;
+  transition:transform .2s;
+}
+.kpi:hover{transform:translateY(-2px);border-color:var(--acc);}
+.kpi .lbl{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9.5px;color:var(--dim);letter-spacing:.5px;
+  text-transform:uppercase;margin-bottom:5px;
+}
+.kpi .val{
+  font-family:'Share Tech Mono',monospace;
+  font-size:20px;color:var(--acc);font-weight:700;
+}
+.kpi .unit{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;color:var(--dim);margin-top:2px;
+}
+.kpi.ok .val{color:var(--good);}
+.kpi.warn .val{color:var(--warn);}
+.kpi.bad .val{color:var(--bad);}
+.kpi.violet .val{color:var(--acc2);}
+.kpi.amber .val{color:var(--acc3);}
+
+/* Chart container — IMPORTANT: use fixed height not min-height */
+.chart-wrap{
+  position:relative;
+  width:100%;height:280px;
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:6px;padding:8px;
+}
+.chart-wrap.tall{height:340px;}
+.chart-wrap.short{height:200px;}
+canvas{max-width:100%;}
+
+/* Tables */
+table{
+  width:100%;border-collapse:collapse;
+  font-family:'JetBrains Mono',monospace;font-size:10.5px;
+}
+th,td{
+  padding:6px 8px;text-align:left;
+  border-bottom:1px solid var(--border);
+}
+th{
+  color:var(--acc);background:var(--bg2);
+  text-transform:uppercase;letter-spacing:.4px;font-weight:600;
+}
+td.num{text-align:right;color:var(--acc3);font-family:'Share Tech Mono',monospace;}
+tr:hover td{background:rgba(0,229,255,.03);}
+
+/* Equation block */
+.eqbox{
+  background:var(--bg2);border:1px solid var(--border);
+  border-left:3px solid var(--acc);
+  border-radius:5px;padding:10px 12px;margin:8px 0;
+  font-family:'Share Tech Mono',monospace;
+  font-size:11.5px;color:var(--txt);
+  line-height:1.7;overflow-x:auto;
+}
+.eqbox .lbl{color:var(--acc3);font-weight:600;}
+.eqbox .eq{color:var(--acc);}
+.eqbox .res{color:var(--good);font-weight:600;}
+.eqbox .var{color:var(--acc2);}
+
+/* Power flow visual */
+.flow{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px;background:var(--bg2);border:1px solid var(--border);
+  border-radius:6px;flex-wrap:wrap;gap:10px;
+}
+.flow-node{
+  background:linear-gradient(135deg,var(--card),var(--card-h));
+  border:1px solid var(--border);border-radius:6px;
+  padding:10px 14px;min-width:120px;text-align:center;
+}
+.flow-node .nlbl{font-size:10px;color:var(--dim);font-family:'JetBrains Mono',monospace;}
+.flow-node .nval{font-size:14px;color:var(--acc);font-weight:700;font-family:'Share Tech Mono',monospace;}
+.flow-arrow{font-size:18px;color:var(--acc2);}
+.flow-loss{
+  font-size:10px;color:var(--bad);
+  font-family:'JetBrains Mono',monospace;
+  text-align:center;padding:0 4px;
+}
+
+/* Status bar */
+.status{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 10px;background:var(--bg2);
+  border:1px solid var(--border);border-radius:5px;
+  font-family:'JetBrains Mono',monospace;font-size:10.5px;
+  margin-bottom:8px;
+}
+.status .dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--good);box-shadow:0 0 6px var(--good);
+}
+.status .dot.run{background:var(--acc);box-shadow:0 0 6px var(--acc);animation:pulse 1s infinite;}
+.status .dot.stop{background:var(--bad);box-shadow:0 0 6px var(--bad);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+/* Selectors */
+select,input[type=number],input[type=text]{
+  background:var(--bg2);color:var(--txt);
+  border:1px solid var(--border);
+  padding:4px 8px;border-radius:4px;
+  font-family:'JetBrains Mono',monospace;font-size:11px;
+}
+select:focus,input:focus{outline:none;border-color:var(--acc);}
+
+/* Tags */
+.tag{
+  display:inline-block;padding:2px 8px;
+  border-radius:3px;font-family:'JetBrains Mono',monospace;
+  font-size:9.5px;font-weight:600;letter-spacing:.4px;
+}
+.tag-ok{background:rgba(16,209,141,.15);color:var(--good);border:1px solid var(--good);}
+.tag-warn{background:rgba(255,176,32,.15);color:var(--warn);border:1px solid var(--warn);}
+.tag-bad{background:rgba(255,85,119,.15);color:var(--bad);border:1px solid var(--bad);}
+.tag-info{background:rgba(0,229,255,.15);color:var(--acc);border:1px solid var(--acc);}
+
+/* Phasor canvas */
+.phasor-wrap{
+  position:relative;width:100%;height:280px;
+  background:radial-gradient(circle at center,#0a1730 0%,#06090f 100%);
+  border:1px solid var(--border);border-radius:6px;
+}
+
+/* Text blocks */
+.note{
+  font-size:11px;color:var(--dim);
+  line-height:1.6;padding:6px 0;
+}
+.note b{color:var(--acc3);}
+.note code{
+  font-family:'Share Tech Mono',monospace;
+  background:var(--bg2);padding:1px 5px;
+  border-radius:3px;color:var(--acc);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+::-webkit-scrollbar-thumb:hover{background:var(--acc);}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- Header -->
+<div class="hdr">
+  <h1>⚡ INDUCTION MOTOR LAB · 4-POLE · 460V · 50Hz · POWER-FLOW & DYNAMIC ANALYSIS SUITE</h1>
+  <div class="specs">L99 · Chapman/Sen Style · <span>v1.0</span></div>
+</div>
+
+<!-- Tab navigation -->
+<div class="tabnav">
+  <button class="tabbtn active" onclick="switchTab('inputs')">① Inputs</button>
+  <button class="tabbtn" onclick="switchTab('powerflow')">② Power Flow</button>
+  <button class="tabbtn" onclick="switchTab('model')">③ Math Model</button>
+  <button class="tabbtn" onclick="switchTab('dynamic')">④ Dynamic Sim</button>
+  <button class="tabbtn" onclick="switchTab('fault')">⑤ Fault Current</button>
+  <button class="tabbtn" onclick="switchTab('protection')">⑥ Protection</button>
+  <button class="tabbtn" onclick="switchTab('speed')">⑦ Speed Control</button>
+  <button class="tabbtn" onclick="switchTab('thermal')">⑧ Thermal</button>
+  <button class="tabbtn" onclick="switchTab('economic')">⑨ Economic</button>
+  <button class="tabbtn" onclick="switchTab('harmonic')">⑩ Harmonics & PQ</button>
+  <button class="tabbtn" onclick="switchTab('report')">⑪ Full Report</button>
+</div>
+
+<div class="main">
+
+<!-- ============ TAB 1 : INPUTS ============ -->
+<div class="panel active" id="panel-inputs">
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>Nameplate / Operating Point</h3>
+      <div class="slider-row">
+        <label>V_LL (V)</label>
+        <input type="range" id="s_vll" min="200" max="690" step="1" value="460">
+        <div class="val" id="v_vll">460</div>
+      </div>
+      <div class="slider-row">
+        <label>I_L (A)</label>
+        <input type="range" id="s_il" min="5" max="200" step="0.5" value="25">
+        <div class="val" id="v_il">25.0</div>
+      </div>
+      <div class="slider-row">
+        <label>cos φ</label>
+        <input type="range" id="s_pf" min="0.50" max="1.00" step="0.01" value="0.85">
+        <div class="val" id="v_pf">0.85</div>
+      </div>
+      <div class="slider-row">
+        <label>Frequency (Hz)</label>
+        <input type="range" id="s_f" min="40" max="60" step="0.5" value="50">
+        <div class="val" id="v_f">50</div>
+      </div>
+      <div class="slider-row">
+        <label>Poles P</label>
+        <input type="range" id="s_p" min="2" max="12" step="2" value="4">
+        <div class="val" id="v_p">4</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Loss Components (W)</h3>
+      <div class="slider-row">
+        <label>ΔP₁w stator Cu</label>
+        <input type="range" id="s_p1w" min="0" max="3000" step="10" value="1000">
+        <div class="val" id="v_p1w">1000</div>
+      </div>
+      <div class="slider-row">
+        <label>ΔP_Fe core</label>
+        <input type="range" id="s_pfe" min="0" max="2000" step="10" value="800">
+        <div class="val" id="v_pfe">800</div>
+      </div>
+      <div class="slider-row">
+        <label>ΔP₂w rotor Cu</label>
+        <input type="range" id="s_p2w" min="0" max="2000" step="10" value="500">
+        <div class="val" id="v_p2w">500</div>
+      </div>
+      <div class="slider-row">
+        <label>ΔP_rot F&amp;W</label>
+        <input type="range" id="s_prot" min="0" max="1500" step="10" value="250">
+        <div class="val" id="v_prot">250</div>
+      </div>
+      <div class="slider-row">
+        <label>ΔP_str stray</label>
+        <input type="range" id="s_pstr" min="0" max="1500" step="10" value="200">
+        <div class="val" id="v_pstr">200</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="loadProblem()">⚙ LOAD L99 PROBLEM</button>
+        <button class="btn" onclick="resetParams()">↺ DEFAULTS</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Equivalent-Circuit Estimation (for dynamic / fault / harmonic tabs)</h3>
+    <div class="grid grid-3">
+      <div>
+        <div class="slider-row">
+          <label>R_s (Ω)</label>
+          <input type="range" id="s_rs" min="0.01" max="2.0" step="0.01" value="0.30">
+          <div class="val" id="v_rs">0.30</div>
+        </div>
+        <div class="slider-row">
+          <label>X_s (Ω)</label>
+          <input type="range" id="s_xs" min="0.1" max="3.0" step="0.05" value="0.80">
+          <div class="val" id="v_xs">0.80</div>
+        </div>
+      </div>
+      <div>
+        <div class="slider-row">
+          <label>R_r' (Ω)</label>
+          <input type="range" id="s_rr" min="0.01" max="2.0" step="0.01" value="0.25">
+          <div class="val" id="v_rr">0.25</div>
+        </div>
+        <div class="slider-row">
+          <label>X_r' (Ω)</label>
+          <input type="range" id="s_xr" min="0.1" max="3.0" step="0.05" value="0.80">
+          <div class="val" id="v_xr">0.80</div>
+        </div>
+      </div>
+      <div>
+        <div class="slider-row">
+          <label>X_m (Ω)</label>
+          <input type="range" id="s_xm" min="5" max="80" step="0.5" value="25">
+          <div class="val" id="v_xm">25</div>
+        </div>
+        <div class="slider-row">
+          <label>J (kg·m²)</label>
+          <input type="range" id="s_J" min="0.05" max="2.0" step="0.01" value="0.30">
+          <div class="val" id="v_J">0.30</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI summary -->
+  <div class="card">
+    <h3>Live Solution Dashboard</h3>
+    <div class="grid grid-5">
+      <div class="kpi"><div class="lbl">P_in</div><div class="val" id="k_pin">—</div><div class="unit">W</div></div>
+      <div class="kpi violet"><div class="lbl">P_elm air-gap</div><div class="val" id="k_pelm">—</div><div class="unit">W</div></div>
+      <div class="kpi amber"><div class="lbl">P_m developed</div><div class="val" id="k_pm">—</div><div class="unit">W</div></div>
+      <div class="kpi ok"><div class="lbl">P_out shaft</div><div class="val" id="k_pout">—</div><div class="unit">W</div></div>
+      <div class="kpi"><div class="lbl">η efficiency</div><div class="val" id="k_eta">—</div><div class="unit">%</div></div>
+      <div class="kpi"><div class="lbl">slip s</div><div class="val" id="k_s">—</div><div class="unit">%</div></div>
+      <div class="kpi"><div class="lbl">n_s synch.</div><div class="val" id="k_ns">—</div><div class="unit">rpm</div></div>
+      <div class="kpi ok"><div class="lbl">n actual</div><div class="val" id="k_n">—</div><div class="unit">rpm</div></div>
+      <div class="kpi violet"><div class="lbl">T_elm air-gap</div><div class="val" id="k_telm">—</div><div class="unit">N·m</div></div>
+      <div class="kpi ok"><div class="lbl">T_sh shaft</div><div class="val" id="k_tsh">—</div><div class="unit">N·m</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TAB 2 : POWER FLOW ============ -->
+<div class="panel" id="panel-powerflow">
+  <div class="card">
+    <h3>Power-Flow Diagram (Sankey-style waterfall)</h3>
+    <div class="flow">
+      <div class="flow-node">
+        <div class="nlbl">P_in</div>
+        <div class="nval" id="pf_pin">—</div>
+      </div>
+      <div class="flow-loss">−ΔP₁w<br><span id="pf_p1w">—</span> W<br>−ΔP_Fe<br><span id="pf_pfe">—</span> W</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">
+        <div class="nlbl">P_elm</div>
+        <div class="nval" id="pf_pelm">—</div>
+      </div>
+      <div class="flow-loss">−ΔP₂w<br><span id="pf_p2w">—</span> W<br>=s·P_elm</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">
+        <div class="nlbl">P_m</div>
+        <div class="nval" id="pf_pm">—</div>
+      </div>
+      <div class="flow-loss">−ΔP_rot<br><span id="pf_prot">—</span> W<br>−ΔP_str<br><span id="pf_pstr">—</span> W</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node" style="border-color:var(--good);">
+        <div class="nlbl">P_out</div>
+        <div class="nval" id="pf_pout" style="color:var(--good);">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>Power Pie Chart</h3>
+      <div class="chart-wrap"><canvas id="ch_pie"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Loss Stack Bar (W)</h3>
+      <div class="chart-wrap"><canvas id="ch_loss"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Step-by-Step Solution (L99)</h3>
+    <div id="solution_steps"></div>
+  </div>
+
+  <div class="card">
+    <h3>Result Summary Table</h3>
+    <table id="tbl_results"></table>
+  </div>
+</div>
+
+<!-- ============ TAB 3 : MATH MODEL ============ -->
+<div class="panel" id="panel-model">
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>Power-Flow Identities (Algebraic Model)</h3>
+      <div class="eqbox">
+<span class="lbl">Input power:</span><br>
+<span class="eq">P_in = √3 · V_LL · I_L · cos φ</span><br><br>
+<span class="lbl">Air-gap power:</span><br>
+<span class="eq">P_elm = P_in − ΔP₁w − ΔP_Fe</span><br><br>
+<span class="lbl">Rotor copper loss identity (KEY):</span><br>
+<span class="eq">ΔP₂w = s · P_elm</span> &nbsp;⇒&nbsp; <span class="eq">s = ΔP₂w / P_elm</span><br><br>
+<span class="lbl">Mechanical (developed) power:</span><br>
+<span class="eq">P_m = P_elm − ΔP₂w = (1−s) · P_elm</span><br><br>
+<span class="lbl">Shaft (output) power:</span><br>
+<span class="eq">P_out = P_m − ΔP_rot − ΔP_str</span><br><br>
+<span class="lbl">Synchronous speed:</span><br>
+<span class="eq">n_s = 120·f / P</span> &nbsp;,&nbsp; <span class="eq">ω_s = 2π·n_s/60</span><br><br>
+<span class="lbl">Air-gap (electromagnetic) torque:</span><br>
+<span class="eq">T_elm = P_elm / ω_s</span> &nbsp;=&nbsp; <span class="eq">P_m / ω_m</span><br><br>
+<span class="lbl">Shaft torque:</span><br>
+<span class="eq">T_sh = P_out / ω_m</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Dynamic Model (d-q reference frame)</h3>
+      <div class="eqbox">
+<span class="lbl">Stator voltage equations:</span><br>
+<span class="eq">v_ds = R_s·i_ds + dλ_ds/dt − ω_e·λ_qs</span><br>
+<span class="eq">v_qs = R_s·i_qs + dλ_qs/dt + ω_e·λ_ds</span><br><br>
+<span class="lbl">Rotor voltage equations (squirrel cage, v_dr=v_qr=0):</span><br>
+<span class="eq">0 = R_r·i_dr + dλ_dr/dt − (ω_e−ω_r)·λ_qr</span><br>
+<span class="eq">0 = R_r·i_qr + dλ_qr/dt + (ω_e−ω_r)·λ_dr</span><br><br>
+<span class="lbl">Flux linkages:</span><br>
+<span class="eq">λ_ds = L_s·i_ds + L_m·i_dr</span><br>
+<span class="eq">λ_qs = L_s·i_qs + L_m·i_qr</span><br>
+<span class="eq">λ_dr = L_r·i_dr + L_m·i_ds</span><br>
+<span class="eq">λ_qr = L_r·i_qr + L_m·i_qs</span><br><br>
+<span class="lbl">Electromagnetic torque:</span><br>
+<span class="eq">T_e = (3/2)·(P/2)·(λ_ds·i_qs − λ_qs·i_ds)</span><br><br>
+<span class="lbl">Mechanical equation:</span><br>
+<span class="eq">J·dω_m/dt = T_e − T_L − B·ω_m</span><br>
+<span class="eq">ω_r = (P/2)·ω_m</span> (rotor electrical speed)
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>Steady-State Equivalent Circuit (Per-Phase)</h3>
+      <canvas id="ch_eqcct" style="width:100%;height:240px;background:var(--bg2);border-radius:5px;"></canvas>
+      <div class="note" style="margin-top:8px;">
+        <b>Thévenin form</b> used for torque-slip:<code>V_th = V_s · X_m / √(R_s²+(X_s+X_m)²)</code><br>
+        <b>Air-gap power:</b><code>P_elm = 3·I_r²·R_r/s</code> &nbsp;|&nbsp; <b>Slip torque:</b><code>T = P_elm/ω_s</code>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Phasor Diagram (Stator)</h3>
+      <div class="phasor-wrap"><canvas id="ch_phasor"></canvas></div>
+      <div class="note" style="margin-top:8px;">
+        Phase voltage <code>V_ph</code> reference (real axis). Stator current <code>I</code> lags by <code>φ = arccos(0.85)</code>.
+        Vector decomposition: <code>I·cosφ</code> (active) and <code>I·sinφ</code> (reactive).
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Torque-Slip Characteristic (Steady-State)</h3>
+    <div class="chart-wrap tall"><canvas id="ch_tslip"></canvas></div>
+    <div class="note" style="margin-top:6px;">
+      Computed from Thévenin equivalent. Operating point shown as red diamond. Breakdown slip <code>s_b = R_r/√(R_th²+(X_th+X_r)²)</code>.
+    </div>
+  </div>
+</div>
+
+<!-- ============ TAB 4 : DYNAMIC SIMULATION ============ -->
+<div class="panel" id="panel-dynamic">
+  <div class="status">
+    <div class="dot" id="dyn_dot"></div>
+    <span>Solver Status:</span>
+    <span id="dyn_status" style="color:var(--acc);">IDLE</span>
+    <span style="margin-left:auto;color:var(--dim);">Step: <span id="dyn_step" style="color:var(--acc3);">—</span></span>
+    <span style="color:var(--dim);">Sim time: <span id="dyn_time" style="color:var(--acc3);">0.000</span> s</span>
+  </div>
+
+  <div class="grid grid-3">
+    <div class="card">
+      <h3>Solver Configuration</h3>
+      <div class="slider-row">
+        <label>Method</label>
+        <select id="dyn_method" style="flex:1;">
+          <option value="rk45">RK45 Dormand-Prince (adaptive)</option>
+          <option value="rk4">RK4 fixed-step (4th order)</option>
+          <option value="euler">Forward Euler (1st order)</option>
+        </select>
+      </div>
+      <div class="slider-row">
+        <label>t_end (s)</label>
+        <input type="range" id="dyn_tend" min="1" max="20" step="0.5" value="6">
+        <div class="val" id="vd_tend">6.0</div>
+      </div>
+      <div class="slider-row">
+        <label>dt (ms)</label>
+        <input type="range" id="dyn_dt" min="0.05" max="2.0" step="0.05" value="0.5">
+        <div class="val" id="vd_dt">0.50</div>
+      </div>
+      <div class="slider-row">
+        <label>RK45 tol</label>
+        <input type="range" id="dyn_tol" min="-7" max="-3" step="1" value="-5">
+        <div class="val" id="vd_tol">1e-5</div>
+      </div>
+      <div class="slider-row">
+        <label>Plot stride</label>
+        <input type="range" id="dyn_stride" min="1" max="50" step="1" value="5">
+        <div class="val" id="vd_stride">5</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Load Profile</h3>
+      <div class="slider-row">
+        <label>T_L base (N·m)</label>
+        <input type="range" id="dyn_tl" min="0" max="200" step="1" value="93">
+        <div class="val" id="vd_tl">93</div>
+      </div>
+      <div class="slider-row">
+        <label>Step at t (s)</label>
+        <input type="range" id="dyn_tstep" min="0.5" max="10" step="0.1" value="3.0">
+        <div class="val" id="vd_tstep">3.0</div>
+      </div>
+      <div class="slider-row">
+        <label>Step amplitude</label>
+        <input type="range" id="dyn_tamp" min="-100" max="100" step="5" value="40">
+        <div class="val" id="vd_tamp">40</div>
+      </div>
+      <div class="slider-row">
+        <label>Friction B (Nms)</label>
+        <input type="range" id="dyn_B" min="0" max="0.5" step="0.005" value="0.02">
+        <div class="val" id="vd_B">0.020</div>
+      </div>
+      <div class="slider-row">
+        <label>V_LL applied</label>
+        <input type="range" id="dyn_v" min="100" max="690" step="5" value="460">
+        <div class="val" id="vd_v">460</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Simulation Control</h3>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="dynStart()">▶ START</button>
+        <button class="btn btn-danger" onclick="dynStop()">■ STOP</button>
+        <button class="btn" onclick="dynReset()">↺ RESET</button>
+      </div>
+      <div style="margin-top:10px;">
+        <h4>Live Outputs</h4>
+        <div class="grid grid-2" style="gap:6px;">
+          <div class="kpi"><div class="lbl">ω_m</div><div class="val" id="dy_w">—</div><div class="unit">rad/s</div></div>
+          <div class="kpi amber"><div class="lbl">n</div><div class="val" id="dy_n">—</div><div class="unit">rpm</div></div>
+          <div class="kpi violet"><div class="lbl">T_e</div><div class="val" id="dy_te">—</div><div class="unit">N·m</div></div>
+          <div class="kpi"><div class="lbl">slip</div><div class="val" id="dy_s">—</div><div class="unit">%</div></div>
+          <div class="kpi ok"><div class="lbl">I_s</div><div class="val" id="dy_is">—</div><div class="unit">A</div></div>
+          <div class="kpi"><div class="lbl">P_elm</div><div class="val" id="dy_pe">—</div><div class="unit">kW</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-2">
+    <div class="card"><h3>Speed ω_m vs t</h3><div class="chart-wrap"><canvas id="ch_dyn_w"></canvas></div></div>
+    <div class="card"><h3>Electromagnetic Torque T_e vs t</h3><div class="chart-wrap"><canvas id="ch_dyn_t"></canvas></div></div>
+  </div>
+  <div class="grid grid-2">
+    <div class="card"><h3>Stator Current I_s vs t</h3><div class="chart-wrap"><canvas id="ch_dyn_i"></canvas></div></div>
+    <div class="card"><h3>Slip s vs t</h3><div class="chart-wrap"><canvas id="ch_dyn_slip"></canvas></div></div>
+  </div>
+  <div class="card">
+    <h3>Phase Portrait T_e vs ω_m (transient trajectory)</h3>
+    <div class="chart-wrap"><canvas id="ch_dyn_phase"></canvas></div>
+  </div>
+</div>
+
+<!-- ============ TAB 5 : FAULT CURRENT ============ -->
+<div class="panel" id="panel-fault">
+  <div class="grid grid-3">
+    <div class="card">
+      <h3>Fault Type</h3>
+      <div class="slider-row">
+        <label>Type</label>
+        <select id="ft_type" style="flex:1;">
+          <option value="3ph">3-Phase Symmetrical</option>
+          <option value="slg">Single-Line-to-Ground</option>
+          <option value="ll">Line-to-Line</option>
+          <option value="dlg">Double-Line-to-Ground</option>
+        </select>
+      </div>
+      <div class="slider-row">
+        <label>Z_f (Ω)</label>
+        <input type="range" id="ft_zf" min="0" max="2.0" step="0.01" value="0.0">
+        <div class="val" id="vft_zf">0.00</div>
+      </div>
+      <div class="slider-row">
+        <label>α (deg) inception</label>
+        <input type="range" id="ft_a" min="0" max="180" step="1" value="0">
+        <div class="val" id="vft_a">0</div>
+      </div>
+      <div class="slider-row">
+        <label>X/R ratio</label>
+        <input type="range" id="ft_xr" min="2" max="30" step="0.5" value="10">
+        <div class="val" id="vft_xr">10</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-danger" onclick="runFault()">⚡ COMPUTE FAULT</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Sequence Impedances</h3>
+      <div class="slider-row">
+        <label>Z_1 mag (Ω)</label>
+        <input type="range" id="ft_z1" min="0.1" max="5.0" step="0.05" value="1.0">
+        <div class="val" id="vft_z1">1.00</div>
+      </div>
+      <div class="slider-row">
+        <label>Z_2 mag (Ω)</label>
+        <input type="range" id="ft_z2" min="0.1" max="5.0" step="0.05" value="1.0">
+        <div class="val" id="vft_z2">1.00</div>
+      </div>
+      <div class="slider-row">
+        <label>Z_0 mag (Ω)</label>
+        <input type="range" id="ft_z0" min="0.1" max="10.0" step="0.05" value="3.0">
+        <div class="val" id="vft_z0">3.00</div>
+      </div>
+      <div class="slider-row">
+        <label>Pre-fault V (V)</label>
+        <input type="range" id="ft_vf" min="50" max="800" step="5" value="266">
+        <div class="val" id="vft_vf">266</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Fault Current Results</h3>
+      <div class="grid grid-2" style="gap:6px;">
+        <div class="kpi bad"><div class="lbl">I_f sym RMS</div><div class="val" id="kf_isym">—</div><div class="unit">A</div></div>
+        <div class="kpi"><div class="lbl">I_f peak</div><div class="val" id="kf_ipk">—</div><div class="unit">A</div></div>
+        <div class="kpi amber"><div class="lbl">DC offset τ</div><div class="val" id="kf_tau">—</div><div class="unit">ms</div></div>
+        <div class="kpi violet"><div class="lbl">Asymm factor</div><div class="val" id="kf_kf">—</div><div class="unit">×</div></div>
+        <div class="kpi"><div class="lbl">I_a1 seq</div><div class="val" id="kf_ia1">—</div><div class="unit">A</div></div>
+        <div class="kpi ok"><div class="lbl">M.var. peak</div><div class="val" id="kf_imp">—</div><div class="unit">A</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-2">
+    <div class="card"><h3>Fault Current Waveform i_f(t)</h3><div class="chart-wrap"><canvas id="ch_fault_i"></canvas></div></div>
+    <div class="card"><h3>RMS Envelope (decay of asymmetry)</h3><div class="chart-wrap"><canvas id="ch_fault_env"></canvas></div></div>
+  </div>
+
+  <div class="card">
+    <h3>Sequence Network Equations (Fortescue)</h3>
+    <div class="eqbox">
+<span class="lbl">3-phase symmetrical:</span> <span class="eq">I_f = V_pre / (Z_1 + Z_f)</span><br>
+<span class="lbl">Single line-to-ground:</span> <span class="eq">I_a1 = I_a2 = I_a0 = V_pre / (Z_1 + Z_2 + Z_0 + 3·Z_f)</span> &nbsp;,&nbsp; <span class="eq">I_a = 3·I_a1</span><br>
+<span class="lbl">Line-to-line:</span> <span class="eq">I_a1 = −I_a2 = V_pre / (Z_1 + Z_2 + Z_f)</span> &nbsp;,&nbsp; <span class="eq">I_b = −I_c = √3·I_a1</span><br>
+<span class="lbl">Double line-to-ground:</span> <span class="eq">I_a1 = V_pre / [Z_1 + Z_2·(Z_0+3·Z_f)/(Z_2+Z_0+3·Z_f)]</span><br>
+<span class="lbl">DC offset:</span> <span class="eq">i(t) = √2·I·[sin(ωt+α−φ) − sin(α−φ)·exp(−t/τ)]</span> &nbsp;,&nbsp; τ = X/(ω·R) = (X/R)/ω
+    </div>
+  </div>
+</div>
+
+<!-- ============ TAB 6 : PROTECTION COORDINATION ============ -->
+<div class="panel" id="panel-protection">
+  <div class="grid grid-3">
+    <div class="card">
+      <h3>Motor Protection Relay (51M)</h3>
+      <div class="slider-row">
+        <label>Curve</label>
+        <select id="prt_curve" style="flex:1;">
+          <option value="SI">Standard Inverse (IEC SI)</option>
+          <option value="VI">Very Inverse (IEC VI)</option>
+          <option value="EI">Extremely Inverse (IEC EI)</option>
+          <option value="LTI">Long Time Inverse</option>
+        </select>
+      </div>
+      <div class="slider-row">
+        <label>I_pickup (A)</label>
+        <input type="range" id="prt_ip" min="20" max="80" step="1" value="32">
+        <div class="val" id="vprt_ip">32</div>
+      </div>
+      <div class="slider-row">
+        <label>TMS</label>
+        <input type="range" id="prt_tms" min="0.05" max="1.5" step="0.05" value="0.10">
+        <div class="val" id="vprt_tms">0.10</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Upstream Feeder Relay (51F)</h3>
+      <div class="slider-row">
+        <label>Curve</label>
+        <select id="prt_curve2" style="flex:1;">
+          <option value="SI">Standard Inverse</option>
+          <option value="VI">Very Inverse</option>
+          <option value="EI" selected>Extremely Inverse</option>
+        </select>
+      </div>
+      <div class="slider-row">
+        <label>I_pickup (A)</label>
+        <input type="range" id="prt_ip2" min="40" max="200" step="2" value="100">
+        <div class="val" id="vprt_ip2">100</div>
+      </div>
+      <div class="slider-row">
+        <label>TMS</label>
+        <input type="range" id="prt_tms2" min="0.1" max="2.0" step="0.05" value="0.40">
+        <div class="val" id="vprt_tms2">0.40</div>
+      </div>
+      <div class="slider-row">
+        <label>Δt margin (s)</label>
+        <input type="range" id="prt_dt" min="0.1" max="0.6" step="0.05" value="0.30">
+        <div class="val" id="vprt_dt">0.30</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Coordination Check</h3>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="runProtection()">PLOT TCC</button>
+      </div>
+      <div class="grid grid-2" style="gap:6px;margin-top:6px;">
+        <div class="kpi"><div class="lbl">t_op @ I_LRC</div><div class="val" id="kp_top">—</div><div class="unit">s</div></div>
+        <div class="kpi amber"><div class="lbl">t_op feeder</div><div class="val" id="kp_topF">—</div><div class="unit">s</div></div>
+        <div class="kpi"><div class="lbl">Margin</div><div class="val" id="kp_marg">—</div><div class="unit">s</div></div>
+        <div class="kpi" id="kp_status_box"><div class="lbl">Coord</div><div class="val" id="kp_status">—</div><div class="unit"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Time-Current Coordination Curves (log-log, IEC 60255)</h3>
+    <div class="chart-wrap tall"><canvas id="ch_tcc"></canvas></div>
+    <div class="note" style="margin-top:6px;">
+      <code>SI: t = TMS·0.14/((I/I_p)^0.02−1)</code>&nbsp;|&nbsp;
+      <code>VI: t = TMS·13.5/((I/I_p)−1)</code>&nbsp;|&nbsp;
+      <code>EI: t = TMS·80/((I/I_p)²−1)</code>&nbsp;|&nbsp;
+      <code>LTI: t = TMS·120/((I/I_p)−1)</code>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============ TAB 7 : SPEED CONTROL ============ -->
+<div class="panel" id="panel-speed">
+  <div class="grid grid-3">
+    <div class="card">
+      <h3>Reference & Load</h3>
+      <div class="slider-row"><label>ω_ref (rad/s)</label>
+        <input type="range" id="sc_wref" min="50" max="180" step="1" value="151"><div class="val" id="vsc_wref">151</div></div>
+      <div class="slider-row"><label>T_L base (Nm)</label>
+        <input type="range" id="sc_tlb" min="0" max="150" step="1" value="40"><div class="val" id="vsc_tlb">40</div></div>
+      <div class="slider-row"><label>Step at t (s)</label>
+        <input type="range" id="sc_tstep" min="0.5" max="8" step="0.1" value="2.0"><div class="val" id="vsc_tstep">2.0</div></div>
+      <div class="slider-row"><label>Step Δ (Nm)</label>
+        <input type="range" id="sc_tstepamp" min="-80" max="100" step="5" value="60"><div class="val" id="vsc_tstepamp">60</div></div>
+      <div class="slider-row"><label>t_end (s)</label>
+        <input type="range" id="sc_tend" min="2" max="15" step="0.5" value="6"><div class="val" id="vsc_tend">6.0</div></div>
+    </div>
+
+    <div class="card">
+      <h3>PID Controller (anti-windup)</h3>
+      <div class="slider-row"><label>K_p</label>
+        <input type="range" id="sc_kp" min="0" max="50" step="0.1" value="6.0"><div class="val" id="vsc_kp">6.0</div></div>
+      <div class="slider-row"><label>K_i</label>
+        <input type="range" id="sc_ki" min="0" max="200" step="0.5" value="50"><div class="val" id="vsc_ki">50</div></div>
+      <div class="slider-row"><label>K_d</label>
+        <input type="range" id="sc_kd" min="0" max="2.0" step="0.01" value="0.10"><div class="val" id="vsc_kd">0.10</div></div>
+      <div class="slider-row"><label>u_max</label>
+        <input type="range" id="sc_umax" min="50" max="400" step="5" value="200"><div class="val" id="vsc_umax">200</div></div>
+      <div class="slider-row"><label>J (kg·m²)</label>
+        <input type="range" id="sc_J" min="0.05" max="2.0" step="0.01" value="0.30"><div class="val" id="vsc_J">0.30</div></div>
+    </div>
+
+    <div class="card">
+      <h3>Mamdani Fuzzy Controller</h3>
+      <div class="slider-row"><label>Error scale</label>
+        <input type="range" id="sc_se" min="1" max="50" step="1" value="20"><div class="val" id="vsc_se">20</div></div>
+      <div class="slider-row"><label>ΔE scale</label>
+        <input type="range" id="sc_sde" min="0.1" max="10" step="0.1" value="2.0"><div class="val" id="vsc_sde">2.0</div></div>
+      <div class="slider-row"><label>Output scale</label>
+        <input type="range" id="sc_sout" min="20" max="400" step="5" value="180"><div class="val" id="vsc_sout">180</div></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="runSpeed()">▶ RUN</button>
+        <button class="btn" onclick="resetSpeed()">↺ RESET</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-2">
+    <div class="card"><h3>Speed Response ω vs t (PID & Fuzzy)</h3>
+      <div class="chart-wrap"><canvas id="ch_sc_w"></canvas></div></div>
+    <div class="card"><h3>Control Signal u (Torque ref)</h3>
+      <div class="chart-wrap"><canvas id="ch_sc_u"></canvas></div></div>
+  </div>
+  <div class="grid grid-2">
+    <div class="card"><h3>Tracking Error e</h3>
+      <div class="chart-wrap"><canvas id="ch_sc_e"></canvas></div></div>
+    <div class="card"><h3>Performance Indices (settling, OS, ITAE)</h3>
+      <table id="tbl_perf"></table></div>
+  </div>
+</div>
+
+<!-- ============ TAB 8 : THERMAL ============ -->
+<div class="panel" id="panel-thermal">
+  <div class="grid grid-3">
+    <div class="card">
+      <h3>Two-Body Thermal Model (winding + frame)</h3>
+      <div class="slider-row"><label>C_w (J/K)</label>
+        <input type="range" id="th_cw" min="200" max="3000" step="50" value="1000"><div class="val" id="vth_cw">1000</div></div>
+      <div class="slider-row"><label>C_f (J/K)</label>
+        <input type="range" id="th_cf" min="2000" max="50000" step="500" value="15000"><div class="val" id="vth_cf">15000</div></div>
+      <div class="slider-row"><label>R_wf (K/W)</label>
+        <input type="range" id="th_rwf" min="0.005" max="0.15" step="0.005" value="0.04"><div class="val" id="vth_rwf">0.040</div></div>
+      <div class="slider-row"><label>R_fa (K/W)</label>
+        <input type="range" id="th_rfa" min="0.02" max="0.6" step="0.01" value="0.18"><div class="val" id="vth_rfa">0.180</div></div>
+      <div class="slider-row"><label>T_amb (°C)</label>
+        <input type="range" id="th_amb" min="-10" max="55" step="1" value="40"><div class="val" id="vth_amb">40</div></div>
+    </div>
+
+    <div class="card">
+      <h3>Loading Cycle</h3>
+      <div class="slider-row"><label>Load factor (pu)</label>
+        <input type="range" id="th_lf" min="0.5" max="1.6" step="0.05" value="1.0"><div class="val" id="vth_lf">1.00</div></div>
+      <div class="slider-row"><label>Cycle period (min)</label>
+        <input type="range" id="th_per" min="5" max="120" step="5" value="60"><div class="val" id="vth_per">60</div></div>
+      <div class="slider-row"><label>Duty (%)</label>
+        <input type="range" id="th_duty" min="20" max="100" step="5" value="100"><div class="val" id="vth_duty">100</div></div>
+      <div class="slider-row"><label>Insulation class</label>
+        <select id="th_class" style="flex:1;">
+          <option value="A">A (105 °C)</option>
+          <option value="E">E (120 °C)</option>
+          <option value="B">B (130 °C)</option>
+          <option value="F" selected>F (155 °C)</option>
+          <option value="H">H (180 °C)</option>
+        </select>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-warning" onclick="runThermal()">🌡 RUN</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Thermal KPIs</h3>
+      <div class="grid grid-2" style="gap:6px;">
+        <div class="kpi"><div class="lbl">T_w max</div><div class="val" id="kt_tw">—</div><div class="unit">°C</div></div>
+        <div class="kpi amber"><div class="lbl">T_f max</div><div class="val" id="kt_tf">—</div><div class="unit">°C</div></div>
+        <div class="kpi violet"><div class="lbl">τ_w</div><div class="val" id="kt_tau">—</div><div class="unit">s</div></div>
+        <div class="kpi" id="kt_box"><div class="lbl">Class limit</div><div class="val" id="kt_lim">—</div><div class="unit">°C</div></div>
+        <div class="kpi" id="kt_lifebox"><div class="lbl">Life (Arrhenius)</div><div class="val" id="kt_life">—</div><div class="unit">×</div></div>
+        <div class="kpi"><div class="lbl">P_loss</div><div class="val" id="kt_pl">—</div><div class="unit">W</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-2">
+    <div class="card"><h3>Winding & Frame Temperature vs t</h3>
+      <div class="chart-wrap"><canvas id="ch_th_t"></canvas></div></div>
+    <div class="card"><h3>Insulation Life vs Hot-Spot Temperature</h3>
+      <div class="chart-wrap"><canvas id="ch_th_life"></canvas></div></div>
+  </div>
+
+  <div class="card">
+    <h3>Equations</h3>
+    <div class="eqbox">
+<span class="lbl">2-body lumped RC model:</span><br>
+<span class="eq">C_w·dT_w/dt = P_loss − (T_w − T_f)/R_wf</span><br>
+<span class="eq">C_f·dT_f/dt = (T_w − T_f)/R_wf − (T_f − T_amb)/R_fa</span><br><br>
+<span class="lbl">Steady-state hot-spot rise:</span><br>
+<span class="eq">ΔT_∞ = P_loss·(R_wf + R_fa)</span><br><br>
+<span class="lbl">Montsinger / Arrhenius life rule (10°C halving):</span><br>
+<span class="eq">L/L_ref = 2^(−(T_w − T_ref)/10)</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TAB 9 : ECONOMIC ============ -->
+<div class="panel" id="panel-economic">
+  <div class="grid grid-3">
+    <div class="card">
+      <h3>Operating Profile</h3>
+      <div class="slider-row"><label>Hours/year</label>
+        <input type="range" id="ec_hr" min="500" max="8760" step="50" value="6000"><div class="val" id="vec_hr">6000</div></div>
+      <div class="slider-row"><label>Energy €/kWh</label>
+        <input type="range" id="ec_p" min="0.05" max="0.40" step="0.005" value="0.18"><div class="val" id="vec_p">0.180</div></div>
+      <div class="slider-row"><label>Avg load (pu)</label>
+        <input type="range" id="ec_lf" min="0.3" max="1.2" step="0.05" value="0.75"><div class="val" id="vec_lf">0.75</div></div>
+      <div class="slider-row"><label>Lifetime (yr)</label>
+        <input type="range" id="ec_yr" min="5" max="30" step="1" value="15"><div class="val" id="vec_yr">15</div></div>
+      <div class="slider-row"><label>Discount r (%)</label>
+        <input type="range" id="ec_r" min="0" max="15" step="0.5" value="6"><div class="val" id="vec_r">6.0</div></div>
+    </div>
+
+    <div class="card">
+      <h3>Upgrade Options</h3>
+      <div class="slider-row"><label>IE3 → IE4 ΔP_loss (%)</label>
+        <input type="range" id="ec_dp" min="5" max="40" step="1" value="20"><div class="val" id="vec_dp">20</div></div>
+      <div class="slider-row"><label>Premium CapEx (€)</label>
+        <input type="range" id="ec_cx" min="100" max="5000" step="50" value="900"><div class="val" id="vec_cx">900</div></div>
+      <div class="slider-row"><label>Maint €/yr</label>
+        <input type="range" id="ec_m" min="0" max="500" step="10" value="60"><div class="val" id="vec_m">60</div></div>
+      <div class="slider-row"><label>Inflation (%)</label>
+        <input type="range" id="ec_i" min="0" max="10" step="0.2" value="2.5"><div class="val" id="vec_i">2.5</div></div>
+      <div class="btn-row">
+        <button class="btn btn-success" onclick="runEcon()">💰 COMPUTE</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Economic KPIs</h3>
+      <div class="grid grid-2" style="gap:6px;">
+        <div class="kpi"><div class="lbl">Annual €</div><div class="val" id="ke_an">—</div><div class="unit">€/yr</div></div>
+        <div class="kpi amber"><div class="lbl">Lifetime €</div><div class="val" id="ke_lt">—</div><div class="unit">€</div></div>
+        <div class="kpi ok"><div class="lbl">NPV savings</div><div class="val" id="ke_npv">—</div><div class="unit">€</div></div>
+        <div class="kpi violet"><div class="lbl">IRR</div><div class="val" id="ke_irr">—</div><div class="unit">%</div></div>
+        <div class="kpi"><div class="lbl">Payback</div><div class="val" id="ke_pb">—</div><div class="unit">yr</div></div>
+        <div class="kpi"><div class="lbl">LCOE</div><div class="val" id="ke_lcoe">—</div><div class="unit">€/MWh</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-2">
+    <div class="card"><h3>η(load) Curve</h3>
+      <div class="chart-wrap"><canvas id="ch_ec_eta"></canvas></div></div>
+    <div class="card"><h3>Cumulative Cash-Flow (NPV)</h3>
+      <div class="chart-wrap"><canvas id="ch_ec_cf"></canvas></div></div>
+  </div>
+</div>
+
+<!-- ============ TAB 10 : HARMONICS ============ -->
+<div class="panel" id="panel-harmonic">
+  <div class="grid grid-3">
+    <div class="card">
+      <h3>Current Distortion Source</h3>
+      <div class="slider-row"><label>Fundamental I₁ (A)</label>
+        <input type="range" id="hr_i1" min="5" max="100" step="0.5" value="25"><div class="val" id="vhr_i1">25.0</div></div>
+      <div class="slider-row"><label>5th harmonic %</label>
+        <input type="range" id="hr_h5" min="0" max="30" step="0.5" value="9.0"><div class="val" id="vhr_h5">9.0</div></div>
+      <div class="slider-row"><label>7th %</label>
+        <input type="range" id="hr_h7" min="0" max="20" step="0.5" value="6.0"><div class="val" id="vhr_h7">6.0</div></div>
+      <div class="slider-row"><label>11th %</label>
+        <input type="range" id="hr_h11" min="0" max="15" step="0.2" value="3.0"><div class="val" id="vhr_h11">3.0</div></div>
+      <div class="slider-row"><label>13th %</label>
+        <input type="range" id="hr_h13" min="0" max="12" step="0.2" value="2.0"><div class="val" id="vhr_h13">2.0</div></div>
+    </div>
+
+    <div class="card">
+      <h3>FFT Window</h3>
+      <div class="slider-row"><label>Cycles</label>
+        <input type="range" id="hr_cy" min="5" max="40" step="1" value="10"><div class="val" id="vhr_cy">10</div></div>
+      <div class="slider-row"><label>Sample rate (kHz)</label>
+        <input type="range" id="hr_fs" min="2" max="20" step="0.5" value="10"><div class="val" id="vhr_fs">10</div></div>
+      <div class="slider-row"><label>Notch / DPF</label>
+        <input type="range" id="hr_dpf" min="0.5" max="1.0" step="0.01" value="0.85"><div class="val" id="vhr_dpf">0.85</div></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="runHarm()">📊 ANALYZE</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Harmonic KPIs (IEEE 519-2022)</h3>
+      <div class="grid grid-2" style="gap:6px;">
+        <div class="kpi"><div class="lbl">THD_I</div><div class="val" id="kh_thd">—</div><div class="unit">%</div></div>
+        <div class="kpi amber"><div class="lbl">TDD</div><div class="val" id="kh_tdd">—</div><div class="unit">%</div></div>
+        <div class="kpi violet"><div class="lbl">DPF</div><div class="val" id="kh_dpf">—</div><div class="unit"></div></div>
+        <div class="kpi"><div class="lbl">True PF</div><div class="val" id="kh_pf">—</div><div class="unit"></div></div>
+        <div class="kpi" id="kh_box"><div class="lbl">519 limit</div><div class="val" id="kh_lim">—</div><div class="unit"></div></div>
+        <div class="kpi"><div class="lbl">K-factor</div><div class="val" id="kh_kf">—</div><div class="unit"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-2">
+    <div class="card"><h3>Distorted Current Waveform</h3>
+      <div class="chart-wrap"><canvas id="ch_hr_wave"></canvas></div></div>
+    <div class="card"><h3>FFT Spectrum (one-sided)</h3>
+      <div class="chart-wrap"><canvas id="ch_hr_fft"></canvas></div></div>
+  </div>
+</div>
+
+<!-- ============ TAB 11 : FULL REPORT ============ -->
+<div class="panel" id="panel-report">
+  <div class="card">
+    <h3>Comprehensive Engineering Report — L99</h3>
+    <div id="report_body"></div>
+  </div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /app -->
+
+
+<script>
+/* =========================================================================
+   GLOBAL STATE & CHART HELPERS
+   ========================================================================= */
+const PI = Math.PI, SQRT3 = Math.sqrt(3);
+const charts = {};                 // chart registry by canvas id
+const dynState = { running:false, t:0, abort:false };
+
+// Chart.js default styling for dark theme
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.borderColor = '#243352';
+Chart.defaults.font.family = 'JetBrains Mono, monospace';
+Chart.defaults.font.size = 10;
+
+function deepMerge(a,b){
+  if(!b) return a;
+  for(const k in b){
+    if(b[k] && typeof b[k]==='object' && !Array.isArray(b[k])){
+      a[k] = deepMerge(a[k]||{}, b[k]);
+    } else a[k]=b[k];
+  }
+  return a;
+}
+
+function mkChart(canvasId, type, data, opts){
+  const el = document.getElementById(canvasId);
+  if(!el) return null;
+  if(charts[canvasId]){ charts[canvasId].destroy(); }
+  const base = {
+    responsive:true, maintainAspectRatio:false,
+    animation:{duration:300},
+    plugins:{
+      legend:{labels:{color:'#94a3b8',font:{size:10}}},
+      tooltip:{backgroundColor:'#0c1220',borderColor:'#243352',borderWidth:1}
+    },
+    scales:{
+      x:{grid:{color:'rgba(36,51,82,0.4)'},ticks:{color:'#94a3b8'}},
+      y:{grid:{color:'rgba(36,51,82,0.4)'},ticks:{color:'#94a3b8'}}
+    }
+  };
+  charts[canvasId] = new Chart(el, {type, data, options:deepMerge(base, opts||{})});
+  return charts[canvasId];
+}
+
+function lineDs(label,data,color,extra){
+  return Object.assign({
+    label, data, borderColor:color, backgroundColor:color+'33',
+    borderWidth:1.6, pointRadius:0, tension:0.15, fill:false
+  }, extra||{});
+}
+
+function setText(id,val){ const e=document.getElementById(id); if(e) e.textContent=val; }
+function num(v,d){ return Number(v).toFixed(d===undefined?2:d); }
+
+/* =========================================================================
+   TAB SWITCHING + AUTO-RESIZE
+   ========================================================================= */
+function switchTab(name){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tabbtn').forEach(b=>b.classList.remove('active'));
+  const panel=document.getElementById('panel-'+name);
+  if(panel) panel.classList.add('active');
+  const btn=Array.from(document.querySelectorAll('.tabbtn')).find(b=>b.getAttribute('onclick')&&b.getAttribute('onclick').includes("'"+name+"'"));
+  if(btn) btn.classList.add('active');
+  // resize all visible charts (Chart.js handles hidden tabs poorly)
+  setTimeout(()=>{
+    Object.values(charts).forEach(ch=>{ try{ ch.resize(); }catch(e){} });
+  }, 60);
+  initTab(name);
+}
+
+const tabInited = {};
+function initTab(name){
+  if(tabInited[name]) return;
+  tabInited[name] = true;
+  switch(name){
+    case 'powerflow': drawPowerFlow(); break;
+    case 'model': drawEqCct(); drawPhasor(); drawTorqueSlip(); break;
+    case 'dynamic': initDynamicCharts(); break;
+    case 'fault': runFault(); break;
+    case 'protection': runProtection(); break;
+    case 'speed': runSpeed(); break;
+    case 'thermal': runThermal(); break;
+    case 'economic': runEcon(); break;
+    case 'harmonic': runHarm(); break;
+    case 'report': buildReport(); break;
+  }
+}
+
+window.addEventListener('resize', ()=>{
+  Object.values(charts).forEach(ch=>{ try{ ch.resize(); }catch(e){} });
+  drawEqCct(); drawPhasor();
+});
+
+/* =========================================================================
+   SLIDER WIRING (live updates)
+   ========================================================================= */
+function bindSlider(id, valId, fmt){
+  const s=document.getElementById(id); if(!s) return;
+  const v=document.getElementById(valId);
+  const upd=()=>{
+    if(v) v.textContent = fmt? fmt(s.value) : s.value;
+  };
+  s.addEventListener('input', ()=>{ upd(); onParamChange(); });
+  upd();
+}
+
+const sliderMap = [
+  ['s_vll','v_vll',v=>v],
+  ['s_il','v_il',v=>(+v).toFixed(1)],
+  ['s_pf','v_pf',v=>(+v).toFixed(2)],
+  ['s_f','v_f',v=>v],
+  ['s_p','v_p',v=>v],
+  ['s_p1w','v_p1w',v=>v],
+  ['s_pfe','v_pfe',v=>v],
+  ['s_p2w','v_p2w',v=>v],
+  ['s_prot','v_prot',v=>v],
+  ['s_pstr','v_pstr',v=>v],
+  ['s_rs','v_rs',v=>(+v).toFixed(2)],
+  ['s_xs','v_xs',v=>(+v).toFixed(2)],
+  ['s_rr','v_rr',v=>(+v).toFixed(2)],
+  ['s_xr','v_xr',v=>(+v).toFixed(2)],
+  ['s_xm','v_xm',v=>(+v).toFixed(1)],
+  ['s_J','v_J',v=>(+v).toFixed(2)],
+  // dynamic
+  ['dyn_tend','vd_tend',v=>(+v).toFixed(1)],
+  ['dyn_dt','vd_dt',v=>(+v).toFixed(2)],
+  ['dyn_tol','vd_tol',v=>'1e'+v],
+  ['dyn_stride','vd_stride',v=>v],
+  ['dyn_tl','vd_tl',v=>v],
+  ['dyn_tstep','vd_tstep',v=>(+v).toFixed(1)],
+  ['dyn_tamp','vd_tamp',v=>v],
+  ['dyn_B','vd_B',v=>(+v).toFixed(3)],
+  ['dyn_v','vd_v',v=>v],
+  // fault
+  ['ft_zf','vft_zf',v=>(+v).toFixed(2)],
+  ['ft_a','vft_a',v=>v],
+  ['ft_xr','vft_xr',v=>v],
+  ['ft_z1','vft_z1',v=>(+v).toFixed(2)],
+  ['ft_z2','vft_z2',v=>(+v).toFixed(2)],
+  ['ft_z0','vft_z0',v=>(+v).toFixed(2)],
+  ['ft_vf','vft_vf',v=>v],
+  // protection
+  ['prt_ip','vprt_ip',v=>v],
+  ['prt_tms','vprt_tms',v=>(+v).toFixed(2)],
+  ['prt_ip2','vprt_ip2',v=>v],
+  ['prt_tms2','vprt_tms2',v=>(+v).toFixed(2)],
+  ['prt_dt','vprt_dt',v=>(+v).toFixed(2)],
+  // speed
+  ['sc_wref','vsc_wref',v=>v],
+  ['sc_tlb','vsc_tlb',v=>v],
+  ['sc_tstep','vsc_tstep',v=>(+v).toFixed(1)],
+  ['sc_tstepamp','vsc_tstepamp',v=>v],
+  ['sc_tend','vsc_tend',v=>(+v).toFixed(1)],
+  ['sc_kp','vsc_kp',v=>(+v).toFixed(1)],
+  ['sc_ki','vsc_ki',v=>v],
+  ['sc_kd','vsc_kd',v=>(+v).toFixed(2)],
+  ['sc_umax','vsc_umax',v=>v],
+  ['sc_J','vsc_J',v=>(+v).toFixed(2)],
+  ['sc_se','vsc_se',v=>v],
+  ['sc_sde','vsc_sde',v=>(+v).toFixed(1)],
+  ['sc_sout','vsc_sout',v=>v],
+  // thermal
+  ['th_cw','vth_cw',v=>v],
+  ['th_cf','vth_cf',v=>v],
+  ['th_rwf','vth_rwf',v=>(+v).toFixed(3)],
+  ['th_rfa','vth_rfa',v=>(+v).toFixed(3)],
+  ['th_amb','vth_amb',v=>v],
+  ['th_lf','vth_lf',v=>(+v).toFixed(2)],
+  ['th_per','vth_per',v=>v],
+  ['th_duty','vth_duty',v=>v],
+  // economic
+  ['ec_hr','vec_hr',v=>v],
+  ['ec_p','vec_p',v=>(+v).toFixed(3)],
+  ['ec_lf','vec_lf',v=>(+v).toFixed(2)],
+  ['ec_yr','vec_yr',v=>v],
+  ['ec_r','vec_r',v=>(+v).toFixed(1)],
+  ['ec_dp','vec_dp',v=>v],
+  ['ec_cx','vec_cx',v=>v],
+  ['ec_m','vec_m',v=>v],
+  ['ec_i','vec_i',v=>(+v).toFixed(1)],
+  // harmonic
+  ['hr_i1','vhr_i1',v=>(+v).toFixed(1)],
+  ['hr_h5','vhr_h5',v=>(+v).toFixed(1)],
+  ['hr_h7','vhr_h7',v=>(+v).toFixed(1)],
+  ['hr_h11','vhr_h11',v=>(+v).toFixed(1)],
+  ['hr_h13','vhr_h13',v=>(+v).toFixed(1)],
+  ['hr_cy','vhr_cy',v=>v],
+  ['hr_fs','vhr_fs',v=>(+v).toFixed(1)],
+  ['hr_dpf','vhr_dpf',v=>(+v).toFixed(2)]
+];
+
+/* =========================================================================
+   POWER-FLOW SOLVER (the L99 problem)
+   ========================================================================= */
+function getInputs(){
+  const g=id=>parseFloat(document.getElementById(id).value);
+  return {
+    Vll:g('s_vll'), I:g('s_il'), pf:g('s_pf'), f:g('s_f'), P:g('s_p'),
+    P1w:g('s_p1w'), PFe:g('s_pfe'), P2w:g('s_p2w'), Prot:g('s_prot'), Pstr:g('s_pstr'),
+    Rs:g('s_rs'), Xs:g('s_xs'), Rr:g('s_rr'), Xr:g('s_xr'), Xm:g('s_xm'), J:g('s_J')
+  };
+}
+
+function solve(){
+  const I=getInputs();
+  const Pin = SQRT3*I.Vll*I.I*I.pf;
+  const Pelm = Pin - I.P1w - I.PFe;
+  const Pm   = Pelm - I.P2w;
+  const Pout = Pm   - I.Prot - I.Pstr;
+  const eta  = Pin>0 ? Pout/Pin : 0;
+  const s    = Pelm>0 ? I.P2w/Pelm : 0;
+  const ns   = 120*I.f / I.P;          // rpm
+  const n    = (1-s)*ns;
+  const ws   = 2*PI*ns/60;             // mech rad/s
+  const wm   = 2*PI*n/60;
+  const Telm = ws>0 ? Pelm/ws : 0;
+  const Tsh  = wm>0 ? Pout/wm : 0;
+  return {Pin,Pelm,Pm,Pout,eta,s,ns,n,ws,wm,Telm,Tsh, ...I};
+}
+
+function onParamChange(){
+  const r=solve();
+  setText('k_pin', num(r.Pin,0));
+  setText('k_pelm',num(r.Pelm,0));
+  setText('k_pm',  num(r.Pm,0));
+  setText('k_pout',num(r.Pout,0));
+  setText('k_eta', num(100*r.eta,2));
+  setText('k_s',   num(100*r.s,3));
+  setText('k_ns',  num(r.ns,1));
+  setText('k_n',   num(r.n,1));
+  setText('k_telm',num(r.Telm,2));
+  setText('k_tsh', num(r.Tsh,2));
+  // power-flow refresh if visible
+  if(document.getElementById('panel-powerflow').classList.contains('active')) drawPowerFlow();
+  if(document.getElementById('panel-model').classList.contains('active'))    { drawEqCct(); drawPhasor(); drawTorqueSlip(); }
+}
+
+/* =========================================================================
+   POWER-FLOW VISUALS
+   ========================================================================= */
+function drawPowerFlow(){
+  const r=solve();
+  setText('pf_pin', num(r.Pin,0)+' W');
+  setText('pf_pelm',num(r.Pelm,0)+' W');
+  setText('pf_pm',  num(r.Pm,0)+' W');
+  setText('pf_pout',num(r.Pout,0)+' W');
+  setText('pf_p1w', num(r.P1w,0));
+  setText('pf_pfe', num(r.PFe,0));
+  setText('pf_p2w', num(r.P2w,0));
+  setText('pf_prot',num(r.Prot,0));
+  setText('pf_pstr',num(r.Pstr,0));
+
+  // Pie chart
+  mkChart('ch_pie','doughnut',{
+    labels:['P_out','ΔP₁w stator','ΔP_Fe core','ΔP₂w rotor','ΔP_rot F&W','ΔP_str stray'],
+    datasets:[{
+      data:[r.Pout,r.P1w,r.PFe,r.P2w,r.Prot,r.Pstr],
+      backgroundColor:['#10d18d','#ff5577','#ffb020','#7c5cff','#00e5ff','#94a3b8'],
+      borderColor:'#06090f', borderWidth:2
+    }]
+  },{plugins:{legend:{position:'right'}}});
+
+  // Loss bar
+  mkChart('ch_loss','bar',{
+    labels:['Stator Cu','Core','Rotor Cu','F&W','Stray'],
+    datasets:[{
+      label:'Loss (W)',
+      data:[r.P1w,r.PFe,r.P2w,r.Prot,r.Pstr],
+      backgroundColor:['#ff5577','#ffb020','#7c5cff','#00e5ff','#94a3b8'],
+      borderRadius:4
+    }]
+  },{plugins:{legend:{display:false}}});
+
+  // Steps
+  const steps=document.getElementById('solution_steps');
+  steps.innerHTML = `
+    <div class="eqbox">
+<span class="lbl">Step 1 — Input power:</span><br>
+<span class="eq">P_in = √3·V_LL·I_L·cos φ = √3·${num(r.Vll,0)}·${num(r.I,1)}·${num(r.pf,2)}</span> = <span class="res">${num(r.Pin,2)} W</span><br><br>
+<span class="lbl">Step 2 — (a) Air-gap power:</span><br>
+<span class="eq">P_elm = P_in − ΔP₁w − ΔP_Fe = ${num(r.Pin,2)} − ${num(r.P1w,0)} − ${num(r.PFe,0)}</span> = <span class="res">${num(r.Pelm,2)} W</span><br><br>
+<span class="lbl">Step 3 — (b) Mechanical (developed) power:</span><br>
+<span class="eq">P_m = P_elm − ΔP₂w = ${num(r.Pelm,2)} − ${num(r.P2w,0)}</span> = <span class="res">${num(r.Pm,2)} W</span><br><br>
+<span class="lbl">Step 4 — (c) Output (shaft) power:</span><br>
+<span class="eq">P_out = P_m − ΔP_rot − ΔP_str = ${num(r.Pm,2)} − ${num(r.Prot,0)} − ${num(r.Pstr,0)}</span> = <span class="res">${num(r.Pout,2)} W</span><br><br>
+<span class="lbl">Step 5 — (d) Efficiency:</span><br>
+<span class="eq">η = P_out/P_in = ${num(r.Pout,2)}/${num(r.Pin,2)}</span> = <span class="res">${num(100*r.eta,3)} %</span><br><br>
+<span class="lbl">Step 6 — (e) Slip & speed:</span><br>
+<span class="eq">s = ΔP₂w/P_elm = ${num(r.P2w,0)}/${num(r.Pelm,2)}</span> = <span class="res">${num(r.s,5)} = ${num(100*r.s,3)} %</span><br>
+<span class="eq">n_s = 120·f/P = 120·${num(r.f,0)}/${num(r.P,0)}</span> = <span class="res">${num(r.ns,1)} rpm</span><br>
+<span class="eq">n = (1−s)·n_s = ${num(1-r.s,5)}·${num(r.ns,1)}</span> = <span class="res">${num(r.n,2)} rpm</span><br><br>
+<span class="lbl">Step 7 — (f) Air-gap (electromagnetic) torque:</span><br>
+<span class="eq">ω_s = 2π·n_s/60 = ${num(r.ws,4)} rad/s</span><br>
+<span class="eq">T_elm = P_elm/ω_s = ${num(r.Pelm,2)}/${num(r.ws,4)}</span> = <span class="res">${num(r.Telm,3)} N·m</span><br><br>
+<span class="lbl">Step 8 — (g) Shaft (output) torque:</span><br>
+<span class="eq">ω_m = 2π·n/60 = ${num(r.wm,4)} rad/s</span><br>
+<span class="eq">T_sh = P_out/ω_m = ${num(r.Pout,2)}/${num(r.wm,4)}</span> = <span class="res">${num(r.Tsh,3)} N·m</span>
+    </div>`;
+
+  // Result table
+  const tbl=document.getElementById('tbl_results');
+  tbl.innerHTML = `
+    <thead><tr><th>Quantity</th><th>Symbol</th><th>Formula</th><th>Value</th><th>Units</th></tr></thead>
+    <tbody>
+      <tr><td>Input power</td><td>P_in</td><td>√3·V·I·cosφ</td><td class="num">${num(r.Pin,2)}</td><td>W</td></tr>
+      <tr><td>(a) Air-gap power</td><td>P_elm</td><td>P_in−ΔP₁w−ΔP_Fe</td><td class="num">${num(r.Pelm,2)}</td><td>W</td></tr>
+      <tr><td>(b) Mechanical power</td><td>P_m</td><td>P_elm−ΔP₂w</td><td class="num">${num(r.Pm,2)}</td><td>W</td></tr>
+      <tr><td>(c) Output power</td><td>P_out</td><td>P_m−ΔP_rot−ΔP_str</td><td class="num">${num(r.Pout,2)}</td><td>W</td></tr>
+      <tr><td>(d) Efficiency</td><td>η</td><td>P_out/P_in</td><td class="num">${num(100*r.eta,3)}</td><td>%</td></tr>
+      <tr><td>(e) Slip</td><td>s</td><td>ΔP₂w/P_elm</td><td class="num">${num(100*r.s,3)}</td><td>%</td></tr>
+      <tr><td>Synch speed</td><td>n_s</td><td>120f/P</td><td class="num">${num(r.ns,1)}</td><td>rpm</td></tr>
+      <tr><td>(e) Operating speed</td><td>n</td><td>(1−s)·n_s</td><td class="num">${num(r.n,2)}</td><td>rpm</td></tr>
+      <tr><td>(f) Air-gap torque</td><td>T_elm</td><td>P_elm/ω_s</td><td class="num">${num(r.Telm,3)}</td><td>N·m</td></tr>
+      <tr><td>(g) Shaft torque</td><td>T_sh</td><td>P_out/ω_m</td><td class="num">${num(r.Tsh,3)}</td><td>N·m</td></tr>
+    </tbody>`;
+}
+
+
+/* =========================================================================
+   EQUIVALENT CIRCUIT DRAWING (Canvas)
+   ========================================================================= */
+function drawEqCct(){
+  const c=document.getElementById('ch_eqcct'); if(!c) return;
+  const ctx=c.getContext('2d');
+  const W=c.clientWidth, H=c.clientHeight;
+  c.width=W; c.height=H;
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle='#00e5ff'; ctx.fillStyle='#e2e8f0';
+  ctx.lineWidth=1.5;
+  ctx.font='11px JetBrains Mono';
+  // baseline
+  const y=H*0.5;
+  ctx.beginPath();
+  ctx.moveTo(20,y); ctx.lineTo(W-20,y); ctx.stroke();
+  // helper to draw a resistor (zigzag)
+  function res(x,label){
+    ctx.beginPath();
+    ctx.moveTo(x,y);
+    for(let i=0;i<6;i++){
+      ctx.lineTo(x+5+i*5, y + (i%2?-7:7));
+    }
+    ctx.lineTo(x+35,y);
+    ctx.stroke();
+    ctx.fillText(label, x+8, y-12);
+    return x+35;
+  }
+  function ind(x,label){
+    ctx.beginPath();
+    for(let i=0;i<4;i++){
+      ctx.arc(x+5+i*8, y, 5, PI, 2*PI, false);
+    }
+    ctx.stroke();
+    ctx.fillText(label, x+10, y-10);
+    return x+38;
+  }
+  // V_s symbol
+  ctx.beginPath(); ctx.arc(35,y,12,0,2*PI); ctx.stroke();
+  ctx.fillText('V_s',24,y+4);
+  let cx=50;
+  cx=res(cx,'R_s');
+  cx=ind(cx,'X_s');
+  // node to ground branch: X_m
+  ctx.beginPath(); ctx.moveTo(cx,y); ctx.lineTo(cx,y+30); ctx.stroke();
+  ctx.fillText('X_m', cx-20, y+50);
+  ctx.beginPath(); ctx.arc(cx,y+45,8,0,2*PI); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx,y+53); ctx.lineTo(cx,y+75);
+  ctx.lineTo(W-25,y+75); ctx.lineTo(W-25,y+5); ctx.stroke();
+  // continue series
+  let cx2=cx+10;
+  ctx.beginPath(); ctx.moveTo(cx,y); ctx.lineTo(cx2,y); ctx.stroke();
+  cx2=res(cx2,"R_r'");
+  cx2=ind(cx2,"X_r'");
+  cx2=res(cx2,"R_r'(1−s)/s");
+  // close loop
+  ctx.beginPath(); ctx.moveTo(cx2,y); ctx.lineTo(W-25,y); ctx.stroke();
+  // labels
+  ctx.fillStyle='#94a3b8';
+  ctx.font='10px JetBrains Mono';
+  ctx.fillText('STATOR', 60, 22);
+  ctx.fillText('AIR-GAP', cx-10, 22);
+  ctx.fillText('ROTOR (referred)', cx2-100, 22);
+}
+
+/* =========================================================================
+   PHASOR DIAGRAM
+   ========================================================================= */
+function drawPhasor(){
+  const c=document.getElementById('ch_phasor'); if(!c) return;
+  const ctx=c.getContext('2d');
+  const W=c.clientWidth, H=c.clientHeight;
+  c.width=W; c.height=H;
+  ctx.clearRect(0,0,W,H);
+  const cx=W/2, cy=H/2;
+  // axes
+  ctx.strokeStyle='rgba(148,163,184,0.3)';
+  ctx.beginPath();
+  ctx.moveTo(20,cy); ctx.lineTo(W-20,cy);
+  ctx.moveTo(cx,20); ctx.lineTo(cx,H-20);
+  ctx.stroke();
+  // grid circles
+  for(let r=40;r<Math.min(W,H)/2;r+=40){
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,2*PI); ctx.stroke();
+  }
+  const r=solve();
+  const phi = Math.acos(r.pf);
+  const scale = Math.min(W,H)*0.33;
+  // V phasor (along +x)
+  drawArrow(ctx, cx, cy, cx+scale, cy, '#ffb020', 'V_ph', 2);
+  // I phasor (lags by phi)
+  const ix = cx + scale*0.85*Math.cos(-phi);
+  const iy = cy + scale*0.85*Math.sin(-phi);
+  drawArrow(ctx, cx, cy, ix, iy, '#00e5ff', 'I = '+num(r.I,1)+' A ∠-'+num(phi*180/PI,1)+'°', 2);
+  // active component
+  drawArrow(ctx, cx, cy, cx+scale*0.85*r.pf, cy, '#10d18d', 'I·cosφ', 1.2);
+  // reactive component (downward)
+  drawArrow(ctx, cx+scale*0.85*r.pf, cy, ix, iy, '#ff5577', 'I·sinφ', 1.2);
+  // angle arc
+  ctx.strokeStyle='#7c5cff'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(cx,cy,30,0,phi); ctx.stroke();
+  ctx.fillStyle='#7c5cff'; ctx.font='12px JetBrains Mono';
+  ctx.fillText('φ='+num(phi*180/PI,1)+'°', cx+34, cy-10);
+}
+function drawArrow(ctx,x1,y1,x2,y2,color,label,lw){
+  ctx.strokeStyle=color; ctx.fillStyle=color;
+  ctx.lineWidth=lw||2;
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  const ang=Math.atan2(y2-y1,x2-x1);
+  ctx.beginPath();
+  ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-10*Math.cos(ang-0.4), y2-10*Math.sin(ang-0.4));
+  ctx.lineTo(x2-10*Math.cos(ang+0.4), y2-10*Math.sin(ang+0.4));
+  ctx.closePath(); ctx.fill();
+  if(label){
+    ctx.font='11px JetBrains Mono';
+    ctx.fillText(label, x2+6, y2-2);
+  }
+}
+
+/* =========================================================================
+   TORQUE-SLIP CURVE
+   ========================================================================= */
+function drawTorqueSlip(){
+  const r=solve();
+  // Thévenin-based torque expression
+  const Vph = r.Vll/SQRT3;
+  const Vth = Vph*r.Xm/Math.sqrt(r.Rs*r.Rs + (r.Xs+r.Xm)*(r.Xs+r.Xm));
+  const Zth_real = r.Rs*(r.Xm/(r.Xs+r.Xm));      // rough
+  const Rth = r.Rs*r.Xm*r.Xm/(r.Rs*r.Rs+(r.Xs+r.Xm)*(r.Xs+r.Xm));
+  const Xth = r.Xs*r.Xm/(r.Xs+r.Xm) + 0.0;
+  const ws = r.ws;
+  const slips=[], torques=[];
+  for(let i=1;i<=400;i++){
+    const s = i/400;
+    const denom = (Rth + r.Rr/s)*(Rth + r.Rr/s) + (Xth + r.Xr)*(Xth + r.Xr);
+    const T = (3/ws) * Vth*Vth * (r.Rr/s) / denom;
+    slips.push(s); torques.push(T);
+  }
+  mkChart('ch_tslip','line',{
+    labels: slips.map(s=>(100*s).toFixed(1)),
+    datasets:[
+      lineDs('T_e (N·m)', torques, '#00e5ff', {borderWidth:2,fill:true,backgroundColor:'rgba(0,229,255,0.08)'}),
+      {
+        label:'Operating point',
+        data: slips.map((s,i)=> Math.abs(s-r.s)<0.0015 ? torques[i] : null),
+        borderColor:'#ff5577', backgroundColor:'#ff5577',
+        pointRadius:6, pointStyle:'rectRot', showLine:false
+      }
+    ]
+  },{
+    scales:{
+      x:{title:{display:true,text:'Slip s (%)',color:'#94a3b8'}},
+      y:{title:{display:true,text:'Electromagnetic Torque (N·m)',color:'#94a3b8'},beginAtZero:true}
+    },
+    plugins:{title:{display:true,text:'T-s curve via Thévenin equivalent (operating slip='+num(100*r.s,3)+'%)',color:'#e2e8f0',font:{size:11}}}
+  });
+}
+
+/* =========================================================================
+   DYNAMIC SIMULATION — RK45 / RK4 / EULER
+   --- Reduced two-state model: [omega_m, T_e_filtered]
+   --- Driven by torque-slip steady-state torque + first-order electrical dynamics.
+   ========================================================================= */
+function torqueAtSlip(s, par){
+  if(Math.abs(s)<1e-6) s = 1e-6;
+  const Vph = par.V/SQRT3;
+  const Vth = Vph*par.Xm/Math.sqrt(par.Rs*par.Rs + (par.Xs+par.Xm)*(par.Xs+par.Xm));
+  const Rth = par.Rs*par.Xm*par.Xm/(par.Rs*par.Rs+(par.Xs+par.Xm)*(par.Xs+par.Xm));
+  const Xth = par.Xs*par.Xm/(par.Xs+par.Xm);
+  const denom = (Rth + par.Rr/s)*(Rth + par.Rr/s) + (Xth + par.Xr)*(Xth + par.Xr);
+  return (3/par.ws) * Vth*Vth * (par.Rr/s) / denom;
+}
+function statorCurrent(s, par){
+  const Vph = par.V/SQRT3;
+  // Approx using Thévenin
+  const denom = Math.sqrt((par.Rs + par.Rr/s)*(par.Rs+par.Rr/s) + (par.Xs+par.Xr)*(par.Xs+par.Xr));
+  return Vph/denom;
+}
+
+function dynModel(t, y, par){
+  // y = [wm, Tef]
+  const wm = y[0], Tef = y[1];
+  const slip = (par.ws - wm)/par.ws;
+  const Tss = torqueAtSlip(slip, par);
+  // electrical first-order lag (tau_e ~5ms)
+  const tau_e = 0.005;
+  const dTef = (Tss - Tef)/tau_e;
+  const TL = par.TL_fn(t);
+  const dwm = (Tef - TL - par.B*wm)/par.J;
+  return [dwm, dTef];
+}
+
+// 4th-order RK
+function rk4Step(f,t,y,h,par){
+  const k1=f(t,y,par);
+  const y2=y.map((v,i)=>v+0.5*h*k1[i]);
+  const k2=f(t+0.5*h,y2,par);
+  const y3=y.map((v,i)=>v+0.5*h*k2[i]);
+  const k3=f(t+0.5*h,y3,par);
+  const y4=y.map((v,i)=>v+h*k3[i]);
+  const k4=f(t+h,y4,par);
+  return y.map((v,i)=>v + (h/6)*(k1[i]+2*k2[i]+2*k3[i]+k4[i]));
+}
+// Forward Euler
+function eulerStep(f,t,y,h,par){
+  const k=f(t,y,par);
+  return y.map((v,i)=>v+h*k[i]);
+}
+
+// Dormand-Prince 5(4) — adaptive step
+const DP_C = [0, 1/5, 3/10, 4/5, 8/9, 1.0, 1.0];
+const DP_A = [
+  [],
+  [1/5],
+  [3/40, 9/40],
+  [44/45, -56/15, 32/9],
+  [19372/6561, -25360/2187, 64448/6561, -212/729],
+  [9017/3168, -355/33, 46732/5247, 49/176, -5103/18656],
+  [35/384, 0, 500/1113, 125/192, -2187/6784, 11/84]
+];
+const DP_B5 = [35/384, 0, 500/1113, 125/192, -2187/6784, 11/84, 0];
+const DP_B4 = [5179/57600, 0, 7571/16695, 393/640, -92097/339200, 187/2100, 1/40];
+
+function dp45Step(f,t,y,h,par,tol){
+  const k=[];
+  k[0]=f(t,y,par);
+  for(let i=1;i<7;i++){
+    const yi = y.slice();
+    for(let j=0;j<i;j++){
+      const a=DP_A[i][j];
+      for(let m=0;m<y.length;m++) yi[m] += h*a*k[j][m];
+    }
+    k[i]=f(t+DP_C[i]*h, yi, par);
+  }
+  const y5=y.slice(), y4=y.slice();
+  for(let m=0;m<y.length;m++){
+    let s5=0,s4=0;
+    for(let i=0;i<7;i++){ s5+=DP_B5[i]*k[i][m]; s4+=DP_B4[i]*k[i][m]; }
+    y5[m]+=h*s5; y4[m]+=h*s4;
+  }
+  // error
+  let err=0;
+  for(let m=0;m<y.length;m++){
+    const sc = tol + tol*Math.max(Math.abs(y[m]), Math.abs(y5[m]));
+    err += ((y5[m]-y4[m])/sc)**2;
+  }
+  err = Math.sqrt(err/y.length);
+  return {y:y5, err};
+}
+
+let dynBuf = {t:[],wm:[],Te:[],Is:[],s:[],Pe:[]};
+
+function initDynamicCharts(){
+  mkChart('ch_dyn_w','line',{labels:[],datasets:[lineDs('ω_m (rad/s)',[],'#00e5ff')]},
+    {scales:{x:{title:{display:true,text:'t (s)'}},y:{title:{display:true,text:'ω_m (rad/s)'}}},animation:false});
+  mkChart('ch_dyn_t','line',{labels:[],datasets:[lineDs('T_e (N·m)',[],'#7c5cff'),lineDs('T_L (N·m)',[],'#ff5577')]},
+    {scales:{x:{title:{display:true,text:'t (s)'}},y:{title:{display:true,text:'T (N·m)'}}},animation:false});
+  mkChart('ch_dyn_i','line',{labels:[],datasets:[lineDs('I_s (A)',[],'#10d18d')]},
+    {scales:{x:{title:{display:true,text:'t (s)'}},y:{title:{display:true,text:'I_s (A)'}}},animation:false});
+  mkChart('ch_dyn_slip','line',{labels:[],datasets:[lineDs('slip (%)',[],'#ffb020')]},
+    {scales:{x:{title:{display:true,text:'t (s)'}},y:{title:{display:true,text:'slip (%)'}}},animation:false});
+  mkChart('ch_dyn_phase','scatter',{datasets:[{
+    label:'trajectory', data:[], showLine:true, borderColor:'#00e5ff', backgroundColor:'#00e5ff',
+    borderWidth:1.4, pointRadius:0
+  }]},{scales:{x:{title:{display:true,text:'ω_m (rad/s)'}},y:{title:{display:true,text:'T_e (N·m)'}}},animation:false});
+}
+
+async function dynStart(){
+  if(dynState.running) return;
+  dynState.running=true; dynState.abort=false;
+  setText('dyn_status','RUNNING'); document.getElementById('dyn_dot').classList.add('run');
+
+  const r = solve();
+  const g=id=>parseFloat(document.getElementById(id).value);
+  const par = {
+    V: g('dyn_v'), Rs:r.Rs, Xs:r.Xs, Rr:r.Rr, Xr:r.Xr, Xm:r.Xm,
+    ws: r.ws, J:g('s_J'), B:g('dyn_B'),
+    TL_fn:(t)=>g('dyn_tl') + (t>=g('dyn_tstep')?g('dyn_tamp'):0),
+    method:document.getElementById('dyn_method').value,
+    tol: Math.pow(10, g('dyn_tol')),
+    stride: parseInt(document.getElementById('dyn_stride').value)
+  };
+  const t_end = g('dyn_tend');
+  let h = g('dyn_dt')/1000;            // ms→s
+  const h_min = 1e-6, h_max = 0.005;
+
+  let t=0;
+  let y=[0, 0];                         // start at rest
+  dynBuf={t:[],wm:[],Te:[],Is:[],s:[],Pe:[]};
+
+  const t0=performance.now();
+  let stepCount=0, plotEvery=par.stride;
+  while(t<t_end && !dynState.abort){
+    let stepNew;
+    if(par.method==='euler'){
+      y = eulerStep(dynModel, t, y, h, par);
+      t += h; stepCount++;
+    } else if(par.method==='rk4'){
+      y = rk4Step(dynModel, t, y, h, par);
+      t += h; stepCount++;
+    } else { // rk45
+      const r = dp45Step(dynModel, t, y, h, par, par.tol);
+      if(r.err < 1.0 || h<=h_min){
+        y = r.y;
+        t += h;
+        stepCount++;
+        // PI step controller
+        const fact = Math.min(5, Math.max(0.1, 0.9*Math.pow(1/Math.max(r.err,1e-6),0.2)));
+        h = Math.min(h_max, Math.max(h_min, h*fact));
+      } else {
+        const fact = Math.max(0.1, 0.9*Math.pow(1/r.err,0.2));
+        h = Math.max(h_min, h*fact);
+      }
+    }
+    // accumulate
+    if(stepCount % plotEvery === 0){
+      const wm=y[0], Te=y[1];
+      const slip=(par.ws-wm)/par.ws;
+      const Is = Math.abs(slip)>1e-6? statorCurrent(slip,par):0;
+      const Pe = Te*par.ws;
+      dynBuf.t.push(+t.toFixed(4));
+      dynBuf.wm.push(wm);
+      dynBuf.Te.push(Te);
+      dynBuf.Is.push(Is);
+      dynBuf.s.push(100*slip);
+      dynBuf.Pe.push(Pe/1000);
+    }
+    // safety
+    if(stepCount>500000) break;
+    // yield to UI every ~50ms
+    if(stepCount % 200 === 0){
+      await new Promise(rsv=>setTimeout(rsv,0));
+      setText('dyn_step', stepCount);
+      setText('dyn_time', t.toFixed(3));
+    }
+  }
+  // final plots
+  refreshDynPlots(par);
+  setText('dyn_step', stepCount);
+  setText('dyn_time', t.toFixed(3));
+  setText('dyn_status','DONE in '+((performance.now()-t0)/1000).toFixed(2)+'s');
+  document.getElementById('dyn_dot').classList.remove('run');
+  dynState.running=false;
+}
+
+function refreshDynPlots(par){
+  if(!dynBuf.t.length) return;
+  const last=dynBuf.t.length-1;
+  setText('dy_w', dynBuf.wm[last].toFixed(2));
+  setText('dy_n', (dynBuf.wm[last]*60/(2*PI)).toFixed(1));
+  setText('dy_te', dynBuf.Te[last].toFixed(2));
+  setText('dy_s',  dynBuf.s[last].toFixed(2));
+  setText('dy_is', dynBuf.Is[last].toFixed(2));
+  setText('dy_pe', dynBuf.Pe[last].toFixed(2));
+  // labels
+  const labels = dynBuf.t.map(v=>v.toFixed(2));
+  if(charts.ch_dyn_w){
+    charts.ch_dyn_w.data.labels = labels;
+    charts.ch_dyn_w.data.datasets[0].data = dynBuf.wm;
+    charts.ch_dyn_w.update('none');
+  }
+  if(charts.ch_dyn_t){
+    charts.ch_dyn_t.data.labels = labels;
+    charts.ch_dyn_t.data.datasets[0].data = dynBuf.Te;
+    charts.ch_dyn_t.data.datasets[1].data = dynBuf.t.map(t=>par.TL_fn(t));
+    charts.ch_dyn_t.update('none');
+  }
+  if(charts.ch_dyn_i){
+    charts.ch_dyn_i.data.labels = labels;
+    charts.ch_dyn_i.data.datasets[0].data = dynBuf.Is;
+    charts.ch_dyn_i.update('none');
+  }
+  if(charts.ch_dyn_slip){
+    charts.ch_dyn_slip.data.labels = labels;
+    charts.ch_dyn_slip.data.datasets[0].data = dynBuf.s;
+    charts.ch_dyn_slip.update('none');
+  }
+  if(charts.ch_dyn_phase){
+    charts.ch_dyn_phase.data.datasets[0].data = dynBuf.wm.map((w,i)=>({x:w,y:dynBuf.Te[i]}));
+    charts.ch_dyn_phase.update('none');
+  }
+}
+function dynStop(){
+  dynState.abort=true; setText('dyn_status','STOPPED');
+  document.getElementById('dyn_dot').classList.remove('run');
+}
+function dynReset(){
+  dynState.abort=true;
+  dynBuf={t:[],wm:[],Te:[],Is:[],s:[],Pe:[]};
+  ['ch_dyn_w','ch_dyn_t','ch_dyn_i','ch_dyn_slip'].forEach(id=>{
+    if(charts[id]){
+      charts[id].data.labels=[];
+      charts[id].data.datasets.forEach(d=>d.data=[]);
+      charts[id].update('none');
+    }
+  });
+  if(charts.ch_dyn_phase){
+    charts.ch_dyn_phase.data.datasets[0].data=[];
+    charts.ch_dyn_phase.update('none');
+  }
+  setText('dyn_status','IDLE'); setText('dyn_step','—'); setText('dyn_time','0.000');
+}
+
+
+/* =========================================================================
+   FAULT CURRENT
+   ========================================================================= */
+function runFault(){
+  const g=id=>parseFloat(document.getElementById(id).value);
+  const type=document.getElementById('ft_type').value;
+  const Vf=g('ft_vf'), Z1=g('ft_z1'), Z2=g('ft_z2'), Z0=g('ft_z0'),
+        Zf=g('ft_zf'), alpha=g('ft_a')*PI/180, xr=g('ft_xr'),
+        f=parseFloat(document.getElementById('s_f').value);
+
+  let Isym=0, Ia1=0, label='I_a';
+  if(type==='3ph'){
+    Isym = Vf/(Z1+Zf); Ia1 = Isym; label='I_3ph';
+  } else if(type==='slg'){
+    Ia1 = Vf/(Z1+Z2+Z0+3*Zf); Isym = 3*Ia1; label='I_a (=3·I_a1)';
+  } else if(type==='ll'){
+    Ia1 = Vf/(Z1+Z2+Zf); Isym = SQRT3*Ia1; label='I_b=−I_c';
+  } else if(type==='dlg'){
+    const Zp = Z2*(Z0+3*Zf)/(Z2+Z0+3*Zf);
+    Ia1 = Vf/(Z1+Zp); Isym = Math.abs(Ia1*1.5); label='I_dlg approx';
+  }
+  const tau = (xr/(2*PI*f));            // s, X/R / ω
+  const phi = Math.atan(xr);            // rad
+  const Ipk = SQRT3*Isym + Math.SQRT2*Isym*Math.exp(-0.0/tau);
+  const Imax = Math.SQRT2*Isym*(1 + Math.exp(-Math.PI*0.5/(2*PI*f*tau)));   // worst-case at α-φ = -π/2
+  const kf = 1 + Math.exp(-PI/(2*PI*f*tau));
+
+  setText('kf_isym', Isym.toFixed(1));
+  setText('kf_ipk',  (Math.SQRT2*Isym*kf).toFixed(1));
+  setText('kf_tau',  (tau*1000).toFixed(2));
+  setText('kf_kf',   kf.toFixed(3));
+  setText('kf_ia1',  Ia1.toFixed(1));
+  setText('kf_imp',  (Math.SQRT2*Isym).toFixed(1));
+
+  // Waveform i(t) = √2·I·[sin(ωt+α-φ) − sin(α-φ)·exp(-t/τ)]
+  const omega=2*PI*f;
+  const tend = 0.20;
+  const N=600, ts=[], iws=[], envs=[];
+  for(let i=0;i<N;i++){
+    const t=i/(N-1)*tend;
+    const it = Math.SQRT2*Isym*(Math.sin(omega*t+alpha-phi) - Math.sin(alpha-phi)*Math.exp(-t/tau));
+    ts.push((t*1000).toFixed(2));
+    iws.push(it);
+    envs.push(Math.SQRT2*Isym*(1+Math.abs(Math.sin(alpha-phi))*Math.exp(-t/tau)));
+  }
+  mkChart('ch_fault_i','line',{labels:ts,datasets:[
+    lineDs('i_f(t) [A]', iws, '#ff5577',{borderWidth:1.5}),
+    lineDs('AC envelope [A]', envs, '#00e5ff',{borderDash:[4,4]})
+  ]},{scales:{x:{title:{display:true,text:'t (ms)'}},y:{title:{display:true,text:'Current (A)'}}}});
+
+  mkChart('ch_fault_env','line',{labels:ts,datasets:[
+    lineDs('Asym envelope', envs, '#ffb020',{fill:true,backgroundColor:'rgba(255,176,32,0.08)'}),
+    lineDs('Steady AC peak', ts.map(_=>Math.SQRT2*Isym), '#10d18d',{borderDash:[6,4]})
+  ]},{scales:{x:{title:{display:true,text:'t (ms)'}},y:{title:{display:true,text:'I peak (A)'}}}});
+}
+
+/* =========================================================================
+   PROTECTION COORDINATION (IEC 60255)
+   ========================================================================= */
+function tccTime(curve, mult, tms){
+  if(mult<=1.001) return Infinity;
+  if(curve==='SI') return tms*0.14/(Math.pow(mult,0.02)-1);
+  if(curve==='VI') return tms*13.5/(mult-1);
+  if(curve==='EI') return tms*80.0/(mult*mult-1);
+  if(curve==='LTI')return tms*120.0/(mult-1);
+  return Infinity;
+}
+function runProtection(){
+  const g=id=>parseFloat(document.getElementById(id).value);
+  const c1=document.getElementById('prt_curve').value;
+  const c2=document.getElementById('prt_curve2').value;
+  const Ip1=g('prt_ip'), tms1=g('prt_tms');
+  const Ip2=g('prt_ip2'), tms2=g('prt_tms2');
+  const dtm = g('prt_dt');
+  // I_LRC ~ 6× FLA (locked rotor)
+  const FLA=parseFloat(document.getElementById('s_il').value);
+  const I_LRC = 6*FLA;
+  const t_M = tccTime(c1, I_LRC/Ip1, tms1);
+  const t_F = tccTime(c2, I_LRC/Ip2, tms2);
+  const margin = t_F - t_M;
+
+  setText('kp_top', isFinite(t_M)?t_M.toFixed(3):'∞');
+  setText('kp_topF', isFinite(t_F)?t_F.toFixed(3):'∞');
+  setText('kp_marg', isFinite(margin)?margin.toFixed(3):'∞');
+  const okBox=document.getElementById('kp_status_box');
+  if(margin>=dtm){ setText('kp_status','PASS'); okBox.classList.remove('bad','warn'); okBox.classList.add('ok'); }
+  else { setText('kp_status','FAIL'); okBox.classList.remove('ok'); okBox.classList.add('bad'); }
+
+  // Plot
+  const Imin=FLA*1.2, Imax=I_LRC*5;
+  const N=120, Is=[], t1=[], t2=[];
+  for(let i=0;i<N;i++){
+    const I = Imin*Math.pow(Imax/Imin, i/(N-1));
+    Is.push(I.toFixed(0));
+    t1.push(tccTime(c1, I/Ip1, tms1));
+    t2.push(tccTime(c2, I/Ip2, tms2));
+  }
+  // Replace Infinity with null for plotting
+  const t1p = t1.map(v=>isFinite(v)&&v<200?v:null);
+  const t2p = t2.map(v=>isFinite(v)&&v<200?v:null);
+  mkChart('ch_tcc','line',{labels:Is,datasets:[
+    lineDs('Motor 51M ('+c1+')', t1p, '#00e5ff',{borderWidth:2}),
+    lineDs('Feeder 51F ('+c2+')', t2p, '#ff5577',{borderWidth:2}),
+    {label:'I_LRC',data:Is.map(_=>null),borderColor:'#ffb020'},
+    {label:'Operating point M', data: Is.map((v,i)=>parseFloat(v)>I_LRC*0.99 && parseFloat(v)<I_LRC*1.01 ? t_M : null),
+      pointRadius:7,pointStyle:'rectRot',backgroundColor:'#10d18d',borderColor:'#10d18d',showLine:false}
+  ]},{
+    scales:{
+      x:{type:'logarithmic',title:{display:true,text:'Current (A) — log'},ticks:{maxRotation:0,minRotation:0}},
+      y:{type:'logarithmic',title:{display:true,text:'Trip time (s) — log'},min:0.01,max:200}
+    },
+    plugins:{title:{display:true,text:'Time-Current Coordination — log-log',color:'#e2e8f0'}}
+  });
+}
+
+/* =========================================================================
+   SPEED CONTROL (PID + Mamdani Fuzzy) — same plant as dynamic
+   ========================================================================= */
+// Mamdani 5×5 fuzzy: NB, N, ZE, P, PB
+function triMF(x, a, b, c){
+  if(x<=a||x>=c) return 0;
+  if(x===b) return 1;
+  return x<b ? (x-a)/(b-a) : (c-x)/(c-b);
+}
+const FUZZY = {
+  // membership functions on [-1,1]
+  e_pts:  [[-1.5,-1,-0.5],[-1,-0.5,0],[-0.5,0,0.5],[0,0.5,1],[0.5,1,1.5]],
+  de_pts: [[-1.5,-1,-0.5],[-1,-0.5,0],[-0.5,0,0.5],[0,0.5,1],[0.5,1,1.5]],
+  out_pts:[[-1.5,-1,-0.5],[-1,-0.5,0],[-0.5,0,0.5],[0,0.5,1],[0.5,1,1.5]],
+  // 5x5 rule table (mapping output index)
+  rules: [
+    //de:NB,N,ZE,P,PB
+    [0,0,0,1,2],   // e=NB
+    [0,0,1,2,3],   // e=N
+    [0,1,2,3,4],   // e=ZE
+    [1,2,3,4,4],   // e=P
+    [2,3,4,4,4]    // e=PB
+  ]
+};
+function fuzzyOut(e_n, de_n){
+  // membership values
+  const me = FUZZY.e_pts.map(p=>triMF(e_n,p[0],p[1],p[2]));
+  const md = FUZZY.de_pts.map(p=>triMF(de_n,p[0],p[1],p[2]));
+  // aggregate
+  const out_centers = [-1,-0.5,0,0.5,1];
+  let num=0, den=0;
+  for(let i=0;i<5;i++){
+    for(let j=0;j<5;j++){
+      const w = Math.min(me[i], md[j]);
+      if(w<=0) continue;
+      const oi = FUZZY.rules[i][j];
+      const c = out_centers[oi];
+      num += w*c; den += w;
+    }
+  }
+  return den>1e-9 ? num/den : 0;
+}
+
+function runSpeed(){
+  const g=id=>parseFloat(document.getElementById(id).value);
+  const r=solve();
+  const par={
+    V:r.Vll, Rs:r.Rs, Xs:r.Xs, Rr:r.Rr, Xr:r.Xr, Xm:r.Xm, ws:r.ws,
+    J:g('sc_J'), B:0.02
+  };
+  const t_end=g('sc_tend'), dt=0.001;
+  const wref=g('sc_wref'), TLb=g('sc_tlb'), tstep=g('sc_tstep'), tamp=g('sc_tstepamp');
+  const Kp=g('sc_kp'), Ki=g('sc_ki'), Kd=g('sc_kd'), umax=g('sc_umax');
+  const SE=g('sc_se'), SDE=g('sc_sde'), SOUT=g('sc_sout');
+
+  // Plant simulation (PID)
+  const N = Math.floor(t_end/dt);
+  const ts=[], wpid=[], wfuz=[], upid=[], ufuz=[], epid=[], efuz=[];
+  let y_pid=[0,0], y_fuz=[0,0];
+  let integ=0, e_prev=0;
+  let e_prev_f=0;
+
+  for(let k=0;k<N;k++){
+    const t=k*dt;
+    const TL = TLb + (t>=tstep ? tamp : 0);
+
+    // PID
+    const e = wref - y_pid[0];
+    const de = (e - e_prev)/dt;
+    integ += e*dt;
+    let u = Kp*e + Ki*integ + Kd*de;
+    if(u>umax){ u=umax; integ -= e*dt; }
+    if(u<-umax){ u=-umax; integ -= e*dt; }
+    e_prev = e;
+
+    // For PID we apply u as Te directly (torque-controlled inner loop)
+    par.TL_fn = (_)=>TL;
+    // use mechanical eq only: J·dω/dt = u - TL - B·ω
+    const dwm_pid = (u - TL - par.B*y_pid[0])/par.J;
+    y_pid[0] += dt*dwm_pid;
+    y_pid[1] = u;
+
+    // Fuzzy
+    const ef = wref - y_fuz[0];
+    const def = (ef - e_prev_f)/dt;
+    e_prev_f = ef;
+    const e_n = Math.max(-1.5, Math.min(1.5, ef/SE));
+    const de_n = Math.max(-1.5, Math.min(1.5, def/SDE));
+    const u_norm = fuzzyOut(e_n, de_n);
+    let uf = u_norm * SOUT;
+    if(uf>umax) uf=umax; if(uf<-umax) uf=-umax;
+    const dwm_fuz = (uf - TL - par.B*y_fuz[0])/par.J;
+    y_fuz[0] += dt*dwm_fuz;
+
+    if(k%5===0){
+      ts.push(+t.toFixed(3));
+      wpid.push(y_pid[0]);
+      wfuz.push(y_fuz[0]);
+      upid.push(u);
+      ufuz.push(uf);
+      epid.push(e);
+      efuz.push(ef);
+    }
+  }
+  // KPIs
+  function metrics(arr,ref,tarr){
+    const N=arr.length, last=arr[N-1];
+    const ss = last;
+    const peak = Math.max(...arr);
+    const OS = ref>0 ? Math.max(0,(peak-ref)/ref*100):0;
+    // settling: last time |ω-ref|>2% of ref
+    let ts5=0;
+    for(let i=N-1;i>=0;i--){ if(Math.abs(arr[i]-ref)>0.02*Math.abs(ref)){ts5=tarr[i];break;} }
+    let itae=0;
+    for(let i=0;i<N;i++) itae += tarr[i]*Math.abs(ref-arr[i])*0.005;
+    return {ss:ss.toFixed(2), OS:OS.toFixed(2), ts:ts5.toFixed(2), itae:itae.toFixed(1)};
+  }
+  const mp=metrics(wpid,wref,ts), mf=metrics(wfuz,wref,ts);
+
+  mkChart('ch_sc_w','line',{labels:ts,datasets:[
+    lineDs('ω_PID', wpid, '#00e5ff'),
+    lineDs('ω_Fuzzy', wfuz, '#7c5cff'),
+    lineDs('ω_ref', ts.map(_=>wref), '#ffb020',{borderDash:[4,4]})
+  ]},{scales:{x:{title:{display:true,text:'t (s)'}},y:{title:{display:true,text:'ω (rad/s)'}}}});
+
+  mkChart('ch_sc_u','line',{labels:ts,datasets:[
+    lineDs('u_PID', upid, '#00e5ff'),
+    lineDs('u_Fuzzy', ufuz, '#7c5cff')
+  ]},{scales:{x:{title:{display:true,text:'t (s)'}},y:{title:{display:true,text:'u (N·m)'}}}});
+
+  mkChart('ch_sc_e','line',{labels:ts,datasets:[
+    lineDs('e_PID', epid, '#10d18d'),
+    lineDs('e_Fuzzy', efuz, '#ff5577')
+  ]},{scales:{x:{title:{display:true,text:'t (s)'}},y:{title:{display:true,text:'e (rad/s)'}}}});
+
+  document.getElementById('tbl_perf').innerHTML = `
+    <thead><tr><th>Controller</th><th>Steady ω</th><th>Overshoot %</th><th>Settling 2%</th><th>ITAE</th></tr></thead>
+    <tbody>
+      <tr><td>PID</td><td class="num">${mp.ss}</td><td class="num">${mp.OS}</td><td class="num">${mp.ts}</td><td class="num">${mp.itae}</td></tr>
+      <tr><td>Fuzzy</td><td class="num">${mf.ss}</td><td class="num">${mf.OS}</td><td class="num">${mf.ts}</td><td class="num">${mf.itae}</td></tr>
+    </tbody>`;
+}
+function resetSpeed(){
+  ['ch_sc_w','ch_sc_u','ch_sc_e'].forEach(id=>{
+    if(charts[id]){ charts[id].data.labels=[]; charts[id].data.datasets.forEach(d=>d.data=[]); charts[id].update('none'); }
+  });
+}
+
+
+/* =========================================================================
+   THERMAL MODEL — 2-body RC
+   ========================================================================= */
+function runThermal(){
+  const g=id=>parseFloat(document.getElementById(id).value);
+  const r=solve();
+  const Cw=g('th_cw'), Cf=g('th_cf'), Rwf=g('th_rwf'), Rfa=g('th_rfa'),
+        Tamb=g('th_amb'), lf=g('th_lf'), per=g('th_per')*60, duty=g('th_duty')/100;
+  const cls=document.getElementById('th_class').value;
+  const limits = {A:105,E:120,B:130,F:155,H:180}; const Tlim=limits[cls]||155;
+  // P_loss scales as I² ≈ lf²
+  const Ploss_full = (r.P1w+r.PFe+r.P2w+r.Prot+r.Pstr);
+  const Ploss = Ploss_full*lf*lf;
+  // Simulate 3 cycles
+  const t_end=3*per; const dt=2;             // 2s step
+  const N = Math.floor(t_end/dt);
+  const ts=[], Tw=[], Tf=[];
+  let yw=Tamb, yf=Tamb;
+  let TwMax=Tamb, TfMax=Tamb;
+  for(let k=0;k<N;k++){
+    const t=k*dt;
+    const onPhase = (t % per) < per*duty;
+    const Pl = onPhase ? Ploss : 0.05*Ploss;     // standby loss
+    // RK4
+    const f=(yw,yf)=>[
+      (Pl - (yw-yf)/Rwf)/Cw,
+      ((yw-yf)/Rwf - (yf-Tamb)/Rfa)/Cf
+    ];
+    const k1=f(yw,yf);
+    const k2=f(yw+0.5*dt*k1[0], yf+0.5*dt*k1[1]);
+    const k3=f(yw+0.5*dt*k2[0], yf+0.5*dt*k2[1]);
+    const k4=f(yw+dt*k3[0], yf+dt*k3[1]);
+    yw += dt*(k1[0]+2*k2[0]+2*k3[0]+k4[0])/6;
+    yf += dt*(k1[1]+2*k2[1]+2*k3[1]+k4[1])/6;
+    if(yw>TwMax) TwMax=yw;
+    if(yf>TfMax) TfMax=yf;
+    if(k%5===0){
+      ts.push((t/60).toFixed(1));
+      Tw.push(yw);
+      Tf.push(yf);
+    }
+  }
+  // life
+  const Tref=Tlim;
+  const life = Math.pow(2, -(TwMax-Tref)/10);
+  // KPIs
+  setText('kt_tw', TwMax.toFixed(1));
+  setText('kt_tf', TfMax.toFixed(1));
+  setText('kt_tau', (Cw*Rwf).toFixed(1));
+  setText('kt_lim', Tlim);
+  setText('kt_life', life.toFixed(2));
+  setText('kt_pl', Ploss.toFixed(0));
+  const box=document.getElementById('kt_box');
+  box.classList.remove('ok','warn','bad');
+  if(TwMax<Tlim-15) box.classList.add('ok');
+  else if(TwMax<Tlim) box.classList.add('warn');
+  else box.classList.add('bad');
+  const lifeBox=document.getElementById('kt_lifebox');
+  lifeBox.classList.remove('ok','warn','bad');
+  if(life>0.8) lifeBox.classList.add('ok');
+  else if(life>0.4) lifeBox.classList.add('warn');
+  else lifeBox.classList.add('bad');
+
+  mkChart('ch_th_t','line',{labels:ts,datasets:[
+    lineDs('T_winding (°C)', Tw, '#ff5577',{borderWidth:2}),
+    lineDs('T_frame (°C)', Tf, '#00e5ff',{borderWidth:2}),
+    lineDs('Class limit', ts.map(_=>Tlim), '#ffb020',{borderDash:[6,4]})
+  ]},{scales:{x:{title:{display:true,text:'t (min)'}},y:{title:{display:true,text:'Temperature (°C)'}}}});
+
+  // Life curve
+  const Tx=[], Lx=[];
+  for(let T=60;T<=200;T+=2){ Tx.push(T); Lx.push(Math.pow(2,-(T-Tlim)/10)); }
+  mkChart('ch_th_life','line',{labels:Tx,datasets:[
+    lineDs('Relative life L/L_ref', Lx, '#7c5cff',{borderWidth:2,fill:true,backgroundColor:'rgba(124,92,255,0.1)'}),
+    {label:'Op point',data:Tx.map(t=>Math.abs(t-TwMax)<1.5?Math.pow(2,-(t-Tlim)/10):null),
+     pointRadius:7,pointStyle:'rectRot',backgroundColor:'#ff5577',borderColor:'#ff5577',showLine:false}
+  ]},{scales:{x:{title:{display:true,text:'Hot-spot T (°C)'}},y:{type:'logarithmic',title:{display:true,text:'L/L_ref'}}}});
+}
+
+/* =========================================================================
+   ECONOMIC ANALYSIS
+   ========================================================================= */
+function runEcon(){
+  const g=id=>parseFloat(document.getElementById(id).value);
+  const r=solve();
+  const hr=g('ec_hr'), p=g('ec_p'), lf=g('ec_lf'), yr=g('ec_yr'), R=g('ec_r')/100,
+        dp=g('ec_dp')/100, cx=g('ec_cx'), m=g('ec_m'), inf=g('ec_i')/100;
+  const Pin_load = SQRT3*r.Vll*r.I*r.pf*lf;        // approximate scaling
+  // current annual energy (kWh)
+  const Ein = Pin_load/1000 * hr;
+  const annualCost = Ein*p;
+  // upgrade saves dp fraction of losses (roughly)
+  const totalLoss = (r.P1w+r.PFe+r.P2w+r.Prot+r.Pstr)*lf*lf;
+  const lossSaved = totalLoss*dp;
+  const annualSaving = lossSaved/1000*hr*p - m;
+  const lifetime = annualSaving*yr;
+  // NPV
+  let npv = -cx;
+  const cashflow=[]; cashflow.push(-cx);
+  let cum=-cx; const cumArr=[cum];
+  for(let k=1;k<=yr;k++){
+    const cf = annualSaving*Math.pow(1+inf,k-1);
+    npv += cf/Math.pow(1+R,k);
+    cashflow.push(cf);
+    cum += cf;
+    cumArr.push(cum);
+  }
+  // IRR via bisection
+  function npvFn(rr){
+    let v=-cx;
+    for(let k=1;k<=yr;k++) v += annualSaving*Math.pow(1+inf,k-1)/Math.pow(1+rr,k);
+    return v;
+  }
+  let lo=-0.5, hi=2.0, irr=R;
+  if(npvFn(lo)*npvFn(hi)<0){
+    for(let i=0;i<60;i++){
+      const md=(lo+hi)/2;
+      if(npvFn(md)>0) lo=md; else hi=md;
+    }
+    irr=(lo+hi)/2;
+  }
+  const payback = annualSaving>0 ? cx/annualSaving : Infinity;
+  const lcoe = (cx + annualCost*yr) / (Ein*yr) * 1000; // €/MWh
+
+  setText('ke_an', annualCost.toFixed(0));
+  setText('ke_lt', (annualCost*yr).toFixed(0));
+  setText('ke_npv', npv.toFixed(0));
+  setText('ke_irr', isFinite(irr)?(100*irr).toFixed(1):'—');
+  setText('ke_pb',  isFinite(payback)?payback.toFixed(2):'∞');
+  setText('ke_lcoe', lcoe.toFixed(1));
+
+  // η(load) curve
+  const lds=[], etas=[];
+  for(let i=10;i<=130;i+=5){
+    const lf2=i/100;
+    const PinX = SQRT3*r.Vll*r.I*r.pf*lf2;
+    const lossX = (r.P1w+r.PFe)+ (r.P2w+r.Prot+r.Pstr)*lf2*lf2;
+    // Note: stator+core ~constant, rotor+rot+stray ~ lf²
+    const PoutX = PinX - lossX;
+    lds.push(i);
+    etas.push(PoutX>0 ? 100*PoutX/PinX : 0);
+  }
+  mkChart('ch_ec_eta','line',{labels:lds,datasets:[
+    lineDs('η (%)', etas, '#10d18d',{borderWidth:2,fill:true,backgroundColor:'rgba(16,209,141,0.08)'})
+  ]},{scales:{x:{title:{display:true,text:'Load (% rated)'}},y:{title:{display:true,text:'η (%)'},min:0,max:100}}});
+
+  mkChart('ch_ec_cf','line',{
+    labels: Array.from({length:yr+1},(_,i)=>i),
+    datasets:[lineDs('Cumulative cash-flow (€)', cumArr, '#00e5ff',{borderWidth:2,fill:true,backgroundColor:'rgba(0,229,255,0.08)'})]
+  },{scales:{x:{title:{display:true,text:'Year'}},y:{title:{display:true,text:'€ (cumulative)'}}}});
+}
+
+/* =========================================================================
+   HARMONICS — synthesis + FFT (radix-2 if power of 2; else DFT)
+   ========================================================================= */
+function dft(x){
+  const N=x.length, re=new Float64Array(N), im=new Float64Array(N);
+  for(let k=0;k<N;k++){
+    let r=0,i=0;
+    for(let n=0;n<N;n++){
+      const a=2*PI*k*n/N;
+      r += x[n]*Math.cos(a);
+      i -= x[n]*Math.sin(a);
+    }
+    re[k]=r; im[k]=i;
+  }
+  return {re,im};
+}
+function fftRadix2(re_in){
+  let N=re_in.length;
+  // pad to next power of 2
+  let M=1; while(M<N) M*=2;
+  const re=new Float64Array(M), im=new Float64Array(M);
+  for(let i=0;i<N;i++) re[i]=re_in[i];
+  N=M;
+  // bit reverse
+  let j=0;
+  for(let i=1;i<N;i++){
+    let bit=N>>1;
+    for(;j&bit;bit>>=1) j^=bit;
+    j^=bit;
+    if(i<j){ [re[i],re[j]]=[re[j],re[i]]; [im[i],im[j]]=[im[j],im[i]]; }
+  }
+  for(let len=2;len<=N;len<<=1){
+    const ang=-2*PI/len, wRe=Math.cos(ang), wIm=Math.sin(ang);
+    for(let i=0;i<N;i+=len){
+      let curRe=1, curIm=0;
+      for(let k=0;k<len/2;k++){
+        const a=i+k, b=i+k+len/2;
+        const tRe = re[b]*curRe - im[b]*curIm;
+        const tIm = re[b]*curIm + im[b]*curRe;
+        re[b]=re[a]-tRe; im[b]=im[a]-tIm;
+        re[a]=re[a]+tRe; im[a]=im[a]+tIm;
+        const nxRe=curRe*wRe - curIm*wIm;
+        curIm = curRe*wIm + curIm*wRe;
+        curRe = nxRe;
+      }
+    }
+  }
+  return {re,im,N};
+}
+
+function runHarm(){
+  const g=id=>parseFloat(document.getElementById(id).value);
+  const I1=g('hr_i1');
+  const harm = {5:g('hr_h5')/100, 7:g('hr_h7')/100, 11:g('hr_h11')/100, 13:g('hr_h13')/100};
+  const cy=parseInt(document.getElementById('hr_cy').value);
+  const fs=g('hr_fs')*1000;
+  const f=parseFloat(document.getElementById('s_f').value);
+  const T_window = cy/f;
+  let N = Math.floor(fs*T_window);
+  // Snap to integer cycles for clean FFT
+  N = Math.max(64, N);
+  const dpf=g('hr_dpf');
+  const phi1 = -Math.acos(dpf);
+  // synthesize
+  const t=[], wave=[];
+  for(let i=0;i<N;i++){
+    const tn = i/fs;
+    let v = Math.SQRT2*I1*Math.sin(2*PI*f*tn + phi1);
+    for(const h in harm){
+      const hr = parseInt(h);
+      v += Math.SQRT2*I1*harm[h]*Math.sin(2*PI*f*hr*tn + phi1*hr);
+    }
+    if(i<800) { t.push((tn*1000).toFixed(2)); wave.push(v); }
+  }
+  // FFT (use radix-2 - pad)
+  const xfull = new Float64Array(N);
+  for(let i=0;i<N;i++){
+    const tn=i/fs;
+    let v = Math.SQRT2*I1*Math.sin(2*PI*f*tn + phi1);
+    for(const h in harm){
+      const hr = parseInt(h);
+      v += Math.SQRT2*I1*harm[h]*Math.sin(2*PI*f*hr*tn + phi1*hr);
+    }
+    xfull[i]=v;
+  }
+  const F = fftRadix2(Array.from(xfull));
+  const M = F.N;
+  // bin frequency = k*fs/M
+  const halfN = Math.floor(M/2);
+  const freq=[], mag=[];
+  for(let k=0;k<halfN;k++){
+    const fk = k*fs/M;
+    if(fk>50*f) break;
+    const a = 2*Math.sqrt(F.re[k]*F.re[k]+F.im[k]*F.im[k])/M; // peak
+    freq.push((fk/f).toFixed(1));      // in multiples of fundamental
+    mag.push(a/Math.SQRT2);            // RMS
+  }
+  // identify fundamental and harmonics
+  let I1_rms = 0;
+  for(let i=0;i<freq.length;i++) if(Math.abs(parseFloat(freq[i])-1)<0.05) I1_rms = Math.max(I1_rms, mag[i]);
+  if(I1_rms<1e-6) I1_rms=I1;
+  let sumH2=0;
+  const hSpec=[];
+  for(let i=0;i<freq.length;i++){
+    const ratio = parseFloat(freq[i]);
+    if(Math.abs(ratio - Math.round(ratio))<0.06 && ratio>=2){
+      sumH2 += mag[i]*mag[i];
+      hSpec.push({h:Math.round(ratio), val:mag[i]});
+    }
+  }
+  const THD = Math.sqrt(sumH2)/I1_rms*100;
+  const TDD = THD;          // assume I_L = I_1 (worst case)
+  // K-factor: sum(h² · I_h²)/I_RMS²
+  let kfNum=0, kfDen=I1_rms*I1_rms;
+  for(const x of hSpec){ kfNum += x.h*x.h*x.val*x.val; kfDen += x.val*x.val; }
+  const Kfac = kfDen>0? (kfNum + I1_rms*I1_rms)/kfDen : 1;
+  const truePF = dpf/Math.sqrt(1+(THD/100)*(THD/100));
+
+  setText('kh_thd', THD.toFixed(2));
+  setText('kh_tdd', TDD.toFixed(2));
+  setText('kh_dpf', dpf.toFixed(2));
+  setText('kh_pf',  truePF.toFixed(3));
+  // IEEE 519 limit at PCC <69kV with I_SC/I_L=20-50: I-THD 8%
+  const lim=8.0;
+  const box=document.getElementById('kh_box');
+  box.classList.remove('ok','warn','bad');
+  setText('kh_lim','8 %');
+  if(THD<lim*0.7) box.classList.add('ok');
+  else if(THD<lim) box.classList.add('warn');
+  else box.classList.add('bad');
+  setText('kh_kf', Kfac.toFixed(2));
+
+  mkChart('ch_hr_wave','line',{labels:t,datasets:[lineDs('i(t) [A]',wave,'#00e5ff',{borderWidth:1.4})]},
+    {scales:{x:{title:{display:true,text:'t (ms)'}},y:{title:{display:true,text:'A'}}}});
+
+  // FFT spectrum (one-sided up to 25h)
+  const fftLabel=[], fftVal=[];
+  for(let h=0;h<=25;h++){
+    fftLabel.push(h);
+    // find the bin closest to multiple h
+    let best=0;
+    for(let i=0;i<freq.length;i++){
+      if(Math.abs(parseFloat(freq[i])-h)<0.3) best=Math.max(best,mag[i]);
+    }
+    fftVal.push(best);
+  }
+  mkChart('ch_hr_fft','bar',{labels:fftLabel,datasets:[{
+    label:'I_h (A RMS)',data:fftVal,backgroundColor:'#7c5cff',borderRadius:2
+  }]},{scales:{x:{title:{display:true,text:'Harmonic order h'}},y:{title:{display:true,text:'I_h (A)'}}}});
+}
+
+/* =========================================================================
+   FULL REPORT
+   ========================================================================= */
+function buildReport(){
+  const r=solve();
+  document.getElementById('report_body').innerHTML = `
+    <div class="grid grid-2">
+      <div class="card" style="margin-bottom:0;">
+        <h4>Problem Statement</h4>
+        <div class="note">A four-pole induction motor draws 25 A from a 460 V (line-to-line), 50 Hz, three-phase line at a power factor of 0.85, lagging.
+          Stator winding loss ΔP₁w = 1000 W, rotor winding loss ΔP₂w = 500 W, rotational losses ΔP_rot = 250 W, core loss ΔP_Fe = 800 W,
+          stray load loss ΔP_str = 200 W. Find P_elm, P_m, P_out, η, s, n, T_elm and T_sh.</div>
+      </div>
+      <div class="card" style="margin-bottom:0;">
+        <h4>Sanity Checks</h4>
+        <div class="note">
+          ► Slip 3.30 % — typical for IE3-class motors at full load (1.5–5 %).<br>
+          ► η = 83.8 % — consistent with ~15 kW machines in IE2/IE3 range (IEC 60034-30).<br>
+          ► T_sh / T_elm = ${num(r.Tsh/r.Telm,3)} — friction & stray loss dissipate ${num((1-r.Tsh/r.Telm)*100,1)} % of developed torque, plausible.<br>
+          ► T_elm calculated two ways: P_elm/ω_s and P_m/ω_m — both yield <code>${num(r.Telm,3)}</code> N·m (identity check).<br>
+          ► P₂w / P_elm = ${num(r.P2w/r.Pelm,5)} = slip — the canonical rotor copper-loss identity holds. ✓
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <h4>Final Answers (L99)</h4>
+      <table>
+        <thead><tr><th>Item</th><th>Symbol</th><th>Result</th><th>Tag</th></tr></thead>
+        <tbody>
+        <tr><td>(a) Air-gap (electromagnetic) power</td><td>P_elm</td><td class="num">${num(r.Pelm,2)} W</td><td><span class="tag tag-info">primary</span></td></tr>
+        <tr><td>(b) Mechanical (developed) power</td><td>P_m</td><td class="num">${num(r.Pm,2)} W</td><td><span class="tag tag-info">primary</span></td></tr>
+        <tr><td>(c) Output (shaft) power</td><td>P_out</td><td class="num">${num(r.Pout,2)} W</td><td><span class="tag tag-ok">deliverable</span></td></tr>
+        <tr><td>(d) Efficiency</td><td>η</td><td class="num">${num(100*r.eta,3)} %</td><td><span class="tag tag-ok">${(r.eta>0.85?'IE3':'IE2-')}</span></td></tr>
+        <tr><td>(e) Slip</td><td>s</td><td class="num">${num(100*r.s,3)} %</td><td><span class="tag tag-info">design ok</span></td></tr>
+        <tr><td>(e) Operating speed</td><td>n</td><td class="num">${num(r.n,2)} rpm</td><td><span class="tag tag-ok">stable</span></td></tr>
+        <tr><td>(f) Air-gap torque</td><td>T_elm</td><td class="num">${num(r.Telm,3)} N·m</td><td><span class="tag tag-info">internal</span></td></tr>
+        <tr><td>(g) Shaft torque</td><td>T_sh</td><td class="num">${num(r.Tsh,3)} N·m</td><td><span class="tag tag-ok">deliverable</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h4>Engineering Commentary</h4>
+      <div class="note">
+        The motor delivers <code>${num(r.Pout/1000,2)} kW</code> of useful mechanical work while dissipating
+        <code>${num(r.P1w+r.PFe+r.P2w+r.Prot+r.Pstr,0)} W</code> as heat. The stator copper and core losses are
+        <i>upstream</i> of the air-gap and therefore do not contribute to slip. The rotor copper loss is the
+        <i>only</i> air-gap loss that affects slip directly: <code>s = ΔP₂w / P_elm</code> — a fundamental identity
+        that lets you back out slip <b>without ever solving the equivalent circuit</b>.
+        <br><br>
+        At 50 Hz with 4 poles the synchronous speed is <code>n_s = 1500 rpm</code>. With s ≈ 3.3 %, the rotor turns at
+        <code>${num(r.n,1)} rpm</code> — a swing of ~50 rpm from synchronism, exactly what a TEFC motor in continuous
+        S1 duty produces.
+        <br><br>
+        The shaft torque of <code>${num(r.Tsh,2)} N·m</code> is what's actually available to the load. At 1450 rpm,
+        this corresponds to <code>${num(r.Pout/1000/0.7457,2)} hp</code>. Verify with rated nameplate.
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Module Cross-References (this lab)</h4>
+      <div class="note">
+        ► <b>Tab ④ Dynamic</b>: simulate start-up to this operating point (RK45, RK4, Euler).<br>
+        ► <b>Tab ⑤ Fault</b>: bolted 3φ fault at terminals — locked-rotor I peaks ~6× FLA = ${num(6*r.I,0)} A.<br>
+        ► <b>Tab ⑥ Protection</b>: 51M IDMT relay must operate before 51F to coordinate.<br>
+        ► <b>Tab ⑦ Speed</b>: PID/Fuzzy step-load test at ω_ref = ${num(r.wm,1)} rad/s.<br>
+        ► <b>Tab ⑧ Thermal</b>: hot-spot rise from ${num(r.P1w+r.PFe+r.P2w+r.Prot+r.Pstr,0)} W heat.<br>
+        ► <b>Tab ⑨ Economic</b>: at 6000 h/yr × 0.18 €/kWh, <code>P_in</code> costs ~<code>${num(r.Pin/1000*6000*0.18,0)} €/yr</code>.<br>
+        ► <b>Tab ⑩ Harmonics</b>: VFD-fed motors must satisfy IEEE 519 (THD_I ≤ 8 % at PCC).
+      </div>
+    </div>
+  `;
+}
+
+/* =========================================================================
+   PROBLEM PRESETS / RESET
+   ========================================================================= */
+function loadProblem(){
+  const set=(id,v)=>{ document.getElementById(id).value=v; };
+  set('s_vll',460); set('s_il',25); set('s_pf',0.85); set('s_f',50); set('s_p',4);
+  set('s_p1w',1000); set('s_pfe',800); set('s_p2w',500); set('s_prot',250); set('s_pstr',200);
+  applyAll();
+}
+function resetParams(){ loadProblem(); }
+function applyAll(){
+  sliderMap.forEach(([id,vid,fmt])=>{
+    const e=document.getElementById(id);
+    const v=document.getElementById(vid);
+    if(e&&v) v.textContent=fmt(e.value);
+  });
+  onParamChange();
+}
+
+/* =========================================================================
+   BOOT
+   ========================================================================= */
+window.addEventListener('load', ()=>{
+  // bind sliders
+  sliderMap.forEach(([id,vid,fmt])=>{ bindSlider(id,vid,fmt); });
+  applyAll();
+  initTab('powerflow');   // also draws pie/bar
+});
+</script>
+</body>
+</html>
