@@ -27,8 +27,6 @@ matplotlib.use('TkAgg')
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import matplotlib.patches as mpatches
-import matplotlib.patches as mp
-import matplotlib.lines as mlines
 
 # ── Colour Theme ──────────────────────────────────────────────────────────────
 BG     = '#06090f'
@@ -59,6 +57,11 @@ DEF = dict(
 )
 
 # ── Physical helpers ─────────────────────────────────────────────────────────
+
+# Minimum allowable speed in the Euler integrator (rad/s).
+# A small negative value (-0.1 ≈ -1 rpm) prevents runaway during reverse transients
+# in the speed-controller simulation while still allowing true zero-speed operation.
+_OMEGA_MIN_RAD = -0.1
 
 def ke_from_p(p):
     """Back-EMF / torque constant [V·s/rad = N·m/A]."""
@@ -298,8 +301,7 @@ class App(tk.Tk):
         canvas.get_tk_widget().pack(fill='both', expand=True)
         parent.bind('<Configure>', lambda e: (fig.tight_layout(pad=0.4), canvas.draw_idle()))
         axes = fig.subplots(nrows, ncols)
-        if nrows == 1 and ncols == 1:
-            axes = axes
+        # axes is already in the correct form for nrows==ncols==1 (single Axes object)
         return fig, axes, canvas
 
     def _slider(self, parent, label, var, lo, hi, digits=3, cmd=None):
@@ -508,7 +510,7 @@ class App(tk.Tk):
         P_W = p['P_hp'] * 745.7
 
         Da, Ra_pp, Von_a, Voff_a = duty_ripple(p, drop=False, bipolar=False)
-        Db, Rb_pp, Von_b, Voff_b = duty_ripple(p, drop=False, bipolar=False)   # same as a
+        # Case (b) uses same ideal 2-quadrant conditions as (a)
         Dc, Rc_pp, Von_c, Voff_c = duty_ripple(p, drop=True,  bipolar=False)
         Dd, Rd_pp, Von_d, Voff_d = duty_ripple(p, drop=True,  bipolar=True)
 
@@ -753,11 +755,11 @@ class App(tk.Tk):
             if self._stop_flag.is_set():
                 return [0.0, 0.0]
             ia, omega = y
+            ia = float(np.clip(ia, -Ia_max, Ia_max))   # guard against solver overshoot
             va = v_applied(t)
             dia_dt = (va - Ra * ia - Ke * omega) / La
             Tl_cur = Tl if t >= t_load_step else 0.0
             domega_dt = (Ke * ia - Tl_cur - Bf * omega) / J
-            ia = float(np.clip(ia, -Ia_max, Ia_max))
             return [dia_dt, domega_dt]
 
         try:
@@ -894,6 +896,7 @@ class App(tk.Tk):
 
         def ode(t, y):
             ia, omega = y
+            ia = float(np.clip(ia, -Ia_max, Ia_max))   # guard against solver overshoot
             if tripped[0]:
                 va = 0.0; Ra_eff = Ra
             else:
@@ -905,7 +908,6 @@ class App(tk.Tk):
                     Ra_eff = Ra * 0.01  # near-short
             dia = (va - Ra_eff * ia - Ke * omega) / La
             domega = (Ke * ia - Bf * omega) / J
-            ia = float(np.clip(ia, -Ia_max, Ia_max))
             if abs(ia) >= trip_level and not tripped[0]:
                 tripped[0] = True
                 trip_time[0] = t
@@ -962,14 +964,13 @@ class App(tk.Tk):
         fig.tight_layout(pad=0.5)
         self._t3_canvas.draw_idle()
 
-        info = (f'Peak fault current : {peak:.1f} A\n'
-                f'Rated current      : {Ia_r:.1f} A\n'
-                f'Trip level (2×)    : {trip_lv:.1f} A\n'
-                f'Breaker trip time  : {trip_t:.4f} s' if trip_t else
-                f'Peak fault current : {peak:.1f} A\n'
-                f'Rated current      : {Ia_r:.1f} A\n'
-                f'Trip level (2×)    : {trip_lv:.1f} A\n'
-                f'No trip occurred')
+        base_info = (f'Peak fault current : {peak:.1f} A\n'
+                     f'Rated current      : {Ia_r:.1f} A\n'
+                     f'Trip level (2×)    : {trip_lv:.1f} A\n')
+        if trip_t:
+            info = base_info + f'Breaker trip time  : {trip_t:.4f} s'
+        else:
+            info = base_info + 'No trip occurred'
         self._t3_info.config(text=info)
         self._set_status(f'Fault sim done  |  peak ia = {peak:.1f} A')
 
@@ -1214,7 +1215,7 @@ class App(tk.Tk):
             dia    = (va - Ra * ia - Ke * omega) / La
             dw     = (Ke * ia - Tl_now - Bf * omega) / J
             ia     = float(np.clip(ia + dia * dt, -Ia_max, Ia_max))
-            omega  = float(max(omega + dw * dt, -0.1))
+            omega  = float(max(omega + dw * dt, _OMEGA_MIN_RAD))
 
             t_arr[k]  = t
             ia_arr[k] = ia
